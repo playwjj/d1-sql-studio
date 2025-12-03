@@ -160,11 +160,11 @@ export function ApiDocumentation({ tableName, apiUrl, apiKey }: ApiDocumentation
               <div
                 style={{
                   position: 'relative',
-                  background: '#0d1117',
+                  background: '#000',
                   padding: '16px',
                   paddingRight: '90px',
                   borderRadius: '6px',
-                  border: '1px solid #30363d',
+                  border: '1px solid #333',
                   overflow: 'auto'
                 }}
               >
@@ -175,9 +175,9 @@ export function ApiDocumentation({ tableName, apiUrl, apiKey }: ApiDocumentation
                     top: '12px',
                     right: '12px',
                     padding: '6px 12px',
-                    background: copied === example.id ? '#10b981' : '#21262d',
+                    background: copied === example.id ? '#10b981' : '#333',
                     color: '#fff',
-                    border: '1px solid #30363d',
+                    border: 'none',
                     borderRadius: '6px',
                     fontSize: '12px',
                     cursor: 'pointer',
@@ -186,12 +186,12 @@ export function ApiDocumentation({ tableName, apiUrl, apiKey }: ApiDocumentation
                   }}
                   onMouseOver={(e) => {
                     if (copied !== example.id) {
-                      e.currentTarget.style.background = '#30363d';
+                      e.currentTarget.style.background = '#555';
                     }
                   }}
                   onMouseOut={(e) => {
                     if (copied !== example.id) {
-                      e.currentTarget.style.background = '#21262d';
+                      e.currentTarget.style.background = '#333';
                     }
                   }}
                 >
@@ -199,8 +199,8 @@ export function ApiDocumentation({ tableName, apiUrl, apiKey }: ApiDocumentation
                 </button>
                 <pre style={{
                   margin: 0,
-                  color: '#e6edf3',
-                  fontSize: '13px',
+                  color: '#fff',
+                  fontSize: '14px',
                   lineHeight: '1.6',
                   fontFamily: "'Consolas', 'Monaco', 'Courier New', monospace",
                   whiteSpace: 'pre-wrap',
