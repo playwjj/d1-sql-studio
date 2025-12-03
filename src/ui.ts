@@ -1117,12 +1117,22 @@ export function getAdminUI(): string {
         let filteredData = [];
         let sortColumn = null;
         let sortDirection = 'asc';
+        let currentTableSchema = []; // Store current table schema for Add/Edit operations
 
         const API_BASE = '';
 
         // Visual Table Builder Variables
         let tableFields = [];
         let fieldCounter = 0;
+
+        // Generate UUID v4
+        function generateUUID() {
+            return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                const r = Math.random() * 16 | 0;
+                const v = c === 'x' ? r : (r & 0x3 | 0x8);
+                return v.toString(16);
+            });
+        }
 
         // Theme Management
         function initTheme() {
@@ -1995,15 +2005,21 @@ database_id = "你的-database-id"</pre>
                 const schemaResult = await apiRequest(\`/api/tables/\${currentTable}/schema\`);
                 if (!schemaResult.success) throw new Error(schemaResult.error);
 
+                // Store schema for use during submission
+                currentTableSchema = schemaResult.data;
+
                 let formHtml = '';
                 schemaResult.data.forEach(col => {
                     // Skip auto-increment INTEGER primary keys (typically 'id')
                     if (col.pk && col.type.toUpperCase() === 'INTEGER' && col.name.toLowerCase() === 'id') return;
 
+                    // Add placeholder for TEXT primary keys
+                    const placeholder = col.pk && col.type.toUpperCase() === 'TEXT' ? 'placeholder="Leave empty to auto-generate UUID"' : '';
+
                     formHtml += \`
                         <div class="form-group">
-                            <label>\${col.name} \${col.notnull ? '*' : ''}</label>
-                            <input type="text" class="form-control" name="\${col.name}" \${col.notnull ? 'required' : ''}>
+                            <label>\${col.name} \${col.notnull && !col.pk ? '*' : ''}</label>
+                            <input type="text" class="form-control" name="\${col.name}" \${col.notnull && !col.pk ? 'required' : ''} \${placeholder}>
                         </div>
                     \`;
                 });
@@ -2024,6 +2040,9 @@ database_id = "你的-database-id"</pre>
             try {
                 const schemaResult = await apiRequest(\`/api/tables/\${currentTable}/schema\`);
                 if (!schemaResult.success) throw new Error(schemaResult.error);
+
+                // Store schema for consistency
+                currentTableSchema = schemaResult.data;
 
                 let formHtml = '';
                 schemaResult.data.forEach(col => {
@@ -2056,6 +2075,16 @@ database_id = "你的-database-id"</pre>
             try {
                 let result;
                 if (rowModalMode === 'add') {
+                    // Auto-generate UUID for empty TEXT primary keys
+                    currentTableSchema.forEach(col => {
+                        if (col.pk && col.type.toUpperCase() === 'TEXT') {
+                            if (!formData[col.name] || formData[col.name] === null || formData[col.name].trim() === '') {
+                                formData[col.name] = generateUUID();
+                                console.log(\`Auto-generated UUID for \${col.name}: \${formData[col.name]}\`);
+                            }
+                        }
+                    });
+
                     result = await apiRequest(\`/api/tables/\${currentTable}/rows\`, {
                         method: 'POST',
                         body: JSON.stringify(formData),
