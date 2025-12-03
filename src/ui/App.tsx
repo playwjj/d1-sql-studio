@@ -1,18 +1,13 @@
-import { useState, useEffect } from 'preact/hooks';
+import { useState } from 'preact/hooks';
 import { Login } from './components/Login';
 import { Dashboard } from './components/Dashboard';
 
 export function App() {
-  const [apiKey, setApiKey] = useState<string>('');
+  // Synchronously initialize from localStorage to avoid timing issues
+  const [apiKey, setApiKey] = useState<string>(() => {
+    return localStorage.getItem('d1_api_key') || '';
+  });
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-
-  useEffect(() => {
-    const savedKey = localStorage.getItem('d1_api_key');
-    if (savedKey) {
-      setApiKey(savedKey);
-      // Will be validated by child components
-    }
-  }, []);
 
   const handleLogin = (key: string) => {
     setApiKey(key);

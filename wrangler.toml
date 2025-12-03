@@ -6,25 +6,20 @@ compatibility_date = "2024-01-01"
 [site]
 bucket = "./dist"
 
-# D1 Database binding (Optional - can be configured in Cloudflare Dashboard)
-#
-# RECOMMENDED: Deploy first, then bind database in Dashboard (Zero Config!)
-#   1. Push code to GitHub and deploy via Cloudflare Pages
-#   2. In Dashboard: Settings > Functions > D1 database bindings
-#   3. Add binding: Variable name = "DB", Database = create/select your database
-#
-# ALTERNATIVE: For local development, uncomment and configure below:
-#   1. Create database: npx wrangler d1 create d1-sql-studio-db
-#   2. Copy database_id from output
-#   3. Uncomment the [[d1_databases]] section below and paste your database_id
-#
-# [[d1_databases]]
- binding = "DB"
- database_name = "d1-sql-studio"
- database_id = "984c094c-9302-4ba5-808d-b754443c4b82" # Paste your database ID here for local dev
+# D1 Database binding
+# This configuration will persist across deployments
+# The database_id below will be used for both local development and production
+[[d1_databases]]
+binding = "DB"
+database_name = "d1-sql-studio"
+database_id = "984c094c-9302-4ba5-808d-b754443c4b82"
 
-# Environment variables (Optional)
-# If not set, defaults to 'dev-api-key-change-in-production'
-# For production, set via Cloudflare Dashboard or uncomment below:
-# [vars]
-# API_KEY = "your-super-secret-production-key"
+# Environment Variables
+# For Cloudflare Pages deployment, configure here and it will persist across deployments
+[vars]
+API_KEY = "your-production-api-key-change-me"
+
+# Security Note:
+# - If using PUBLIC GitHub repo: Use a strong, unique API key
+# - If using PRIVATE GitHub repo: Any API key is fine
+# - Generate strong key: openssl rand -base64 32

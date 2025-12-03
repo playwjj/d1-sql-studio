@@ -136,30 +136,41 @@ Build output:
 
 ## 🚀 Deployment
 
-### Deploy to Cloudflare Workers
+### Quick Setup (One-Time Configuration)
+
+**Step 1:** Set your API_KEY in `wrangler.toml`:
+```toml
+[vars]
+API_KEY = "your-production-api-key"
+```
+
+Generate a strong key: `openssl rand -base64 32`
+
+**Step 2:** Ensure database binding is configured (already done):
+```toml
+[[d1_databases]]
+binding = "DB"
+database_name = "d1-sql-studio"
+database_id = "your-database-id"
+```
+
+**Step 3:** Commit and push (for Cloudflare Pages) or deploy locally:
 
 ```bash
+# For Cloudflare Pages (GitHub integration)
+git add wrangler.toml
+git commit -m "Configure deployment"
+git push
+
+# For local deployment
 npm run deploy
 ```
 
-This will:
-1. Build the frontend (`vite build`)
-2. Deploy to Cloudflare Workers with static assets
+**Done!** 🎉 All future deployments will automatically use these settings. No need to reconfigure in Cloudflare Dashboard.
 
-### Post-Deployment
-
-1. **Bind D1 Database** (if not done in `wrangler.toml`):
-   - Cloudflare Dashboard > Workers & Pages > Your Worker
-   - Settings > Bindings > D1 Database Bindings
-   - Add binding: Variable name = `DB`
-
-2. **Set API Key** (optional):
-   - Settings > Variables and Secrets
-   - Add variable: `API_KEY` = your-secret-key
-
-3. **Access Your App**:
-   - Visit your Worker URL (e.g., `https://d1-sql-studio.your-subdomain.workers.dev`)
-   - Login with your API key
+### Access Your App
+- Visit your Worker URL (e.g., `https://d1-sql-studio.your-subdomain.workers.dev`)
+- Login with your API key
 
 ## 📁 Project Structure
 

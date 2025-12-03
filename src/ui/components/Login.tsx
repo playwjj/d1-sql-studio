@@ -10,12 +10,14 @@ export function Login({ onLogin, savedApiKey }: LoginProps) {
   const [apiKey, setApiKey] = useState(savedApiKey);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [autoLoginAttempted, setAutoLoginAttempted] = useState(false);
 
   useEffect(() => {
-    if (savedApiKey) {
+    if (savedApiKey && !autoLoginAttempted) {
+      setAutoLoginAttempted(true);
       handleSubmit(new Event('submit') as any);
     }
-  }, []);
+  }, [savedApiKey]);
 
   const handleSubmit = async (e: Event) => {
     e.preventDefault();
