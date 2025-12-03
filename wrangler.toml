@@ -1,6 +1,10 @@
 name = "d1-sql-studio"
-main = "src/index.ts"
+main = "src/worker/index.ts"
 compatibility_date = "2024-01-01"
+
+# Serve static assets from dist directory
+[site]
+bucket = "./dist"
 
 # D1 Database binding (Optional - can be configured in Cloudflare Dashboard)
 #

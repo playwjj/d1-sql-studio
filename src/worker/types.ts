@@ -1,6 +1,7 @@
 export interface Env {
   DB: D1Database;
   API_KEY?: string; // Optional: defaults to 'dev-api-key-change-in-production' if not set
+  __STATIC_CONTENT: KVNamespace; // For Workers Sites
 }
 
 export interface ApiResponse<T = any> {

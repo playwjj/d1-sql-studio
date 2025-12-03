@@ -1,27 +1,24 @@
 import { Env } from './types';
 import { authenticate, corsHeaders } from './auth';
 import { Router } from './router';
-import { getAdminUI } from './ui';
+import { getAssetFromKV } from '@cloudflare/kv-asset-handler';
+
+// @ts-ignore
+import manifestJSON from '__STATIC_CONTENT_MANIFEST';
+const assetManifest = JSON.parse(manifestJSON);
 
 export default {
-  async fetch(request: Request, env: Env): Promise<Response> {
+  async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
+    const url = new URL(request.url);
+
+    // Handle OPTIONS requests
     if (request.method === 'OPTIONS') {
       return new Response(null, {
         headers: corsHeaders(),
       });
     }
 
-    const url = new URL(request.url);
-
-    if (url.pathname === '/' || url.pathname === '') {
-      return new Response(getAdminUI(), {
-        headers: {
-          'Content-Type': 'text/html',
-          ...corsHeaders(),
-        },
-      });
-    }
-
+    // Handle API routes
     if (url.pathname.startsWith('/api/')) {
       if (!authenticate(request, env)) {
         return new Response(
@@ -70,6 +67,37 @@ export default {
       }
     }
 
-    return new Response('Not found', { status: 404 });
+    // Serve static assets
+    try {
+      return await getAssetFromKV(
+        {
+          request,
+          waitUntil: ctx.waitUntil.bind(ctx),
+        },
+        {
+          ASSET_NAMESPACE: env.__STATIC_CONTENT,
+          ASSET_MANIFEST: assetManifest,
+        }
+      );
+    } catch (e) {
+      // If asset not found, return index.html for client-side routing
+      if (e instanceof Error && e.message.includes('could not find')) {
+        try {
+          return await getAssetFromKV(
+            {
+              request: new Request(`${url.origin}/index.html`, request),
+              waitUntil: ctx.waitUntil.bind(ctx),
+            },
+            {
+              ASSET_NAMESPACE: env.__STATIC_CONTENT,
+              ASSET_MANIFEST: assetManifest,
+            }
+          );
+        } catch (e) {
+          return new Response('Not Found', { status: 404 });
+        }
+      }
+      return new Response('Internal Server Error', { status: 500 });
+    }
   },
 };

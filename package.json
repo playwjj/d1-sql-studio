@@ -1,13 +1,16 @@
 {
   "name": "d1-sql-studio",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "Cloudflare D1 Database Management Studio with REST API",
-  "main": "src/index.ts",
+  "type": "module",
   "scripts": {
-    "dev": "wrangler dev",
-    "build": "tsc --noEmit",
-    "deploy": "wrangler deploy",
-    "test": "vitest"
+    "dev": "vite",
+    "dev:worker": "wrangler dev",
+    "build": "vite build && tsc --noEmit",
+    "build:ui": "vite build",
+    "build:worker": "tsc --project tsconfig.worker.json",
+    "preview": "vite preview",
+    "deploy": "npm run build:ui && wrangler deploy"
   },
   "keywords": [
     "cloudflare",
@@ -18,9 +21,16 @@
   ],
   "author": "",
   "license": "MIT",
+  "dependencies": {
+    "@cloudflare/kv-asset-handler": "^0.3.0",
+    "preact": "^10.19.3"
+  },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20231218.0",
+    "@preact/preset-vite": "^2.8.1",
+    "@types/node": "^20.11.0",
     "typescript": "^5.3.3",
+    "vite": "^5.0.11",
     "wrangler": "^3.22.0"
   }
 }

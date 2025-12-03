@@ -2,6 +2,90 @@
 
 All notable changes to D1 SQL Studio will be documented in this file.
 
+## [2.0.0] - 2024-12-03
+
+### 🏗️ Architecture - Complete Modern Rewrite
+
+#### Major Changes
+- **Complete architecture rewrite** using Preact + TypeScript + Vite
+- **Component-based architecture** replacing single-file UI
+- **Modern build system** with Vite for fast HMR and optimized bundling
+- **Workers Sites integration** for static asset serving via KV
+- **Separated frontend and backend** codebases (`src/ui/` and `src/worker/`)
+
+#### Frontend Stack
+- ⚛️ **Preact 10** - Lightweight React alternative (~3KB)
+- 📘 **TypeScript 5** - Full type safety across UI and Worker
+- ⚡ **Vite 5** - Lightning-fast dev server with HMR
+- 🎨 **Modern CSS** - CSS Variables for theming, animations, responsive design
+
+#### Component Architecture
+- **Modular components** - Login, Dashboard, Tables, DataBrowser, QueryEditor
+- **Shared components** - Modal, Button, Alert with variants
+- **API client layer** - Centralized API communication with `ApiClient` class
+- **State management** - React hooks (useState, useEffect)
+
+#### Performance Improvements
+- 📦 **Bundle size** reduced to ~28KB (~10KB gzipped)
+- ⚡ **Fast loading** with code splitting and tree shaking
+- 🔄 **HMR support** for instant development feedback
+- 🎯 **Optimized rendering** with Preact's efficient diffing
+
+#### Developer Experience
+- 🛠️ **Modern tooling** - Vite dev server, TypeScript checking
+- 📂 **Clean structure** - Organized component hierarchy
+- 🔧 **Separate configs** - `tsconfig.json` for UI, `tsconfig.worker.json` for Worker
+- 📝 **Better type safety** - Full TypeScript coverage
+
+### ✨ Retained Features
+- 📊 **Table Management** - View, create, delete tables
+- 📝 **Data Browser** - Browse table data with pagination (50 rows/page)
+- ⚡ **SQL Query Editor** - Execute custom queries with Ctrl+Enter
+- 🔐 **Authentication** - API key-based auth with session persistence
+- 🗄️ **Database Detection** - Smart DATABASE_NOT_BOUND detection with setup guide
+- 🚫 **System Table Filtering** - Auto-hide `_cf_*` system tables
+- 🆔 **UUID Auto-generation** - Auto-generate UUID v4 for empty TEXT primary keys
+- 🔑 **Smart field handling** - Show/hide primary key fields appropriately
+- 🌐 **REST API** - Complete REST API unchanged
+
+### 🗑️ Removed
+- 🌙 **Dark Mode** - Simplified to single light theme
+- 🎨 **Visual Table Builder** - To be reimplemented in future version
+- ⚙️ **Field Manager** - To be reimplemented in future version
+- 🔍 **Search & Filter** - To be reimplemented in future version
+- ⬆️⬇️ **Column Sorting** - To be reimplemented in future version
+- 📥 **Data Export** - To be reimplemented in future version
+- ✏️ **Edit/Delete Row** - UI buttons present, functionality to be implemented
+
+### 🔧 Changed
+- **Build process** - Now uses `vite build` instead of bundling into Worker
+- **Development workflow** - Separate dev servers for frontend (`npm run dev`) and worker (`npm run dev:worker`)
+- **Deployment** - Static assets served via Workers Sites (KV)
+- **File structure** - Reorganized into `src/worker/` and `src/ui/` directories
+
+### 📝 Documentation
+- **Consolidated documentation** - Single comprehensive README.md in English
+- **Removed redundant docs** - Deleted ARCHITECTURE.md, FEATURES.md, MIGRATION_GUIDE.md, TABLE_DESIGNER_GUIDE.md
+- **Architecture diagram** - ASCII diagram showing edge architecture
+- **Complete API docs** - Full REST API reference with examples
+- **Development guide** - Local development, database setup, deployment instructions
+- **Troubleshooting section** - Common issues and solutions
+
+### 🎯 Migration Notes
+This is a breaking change requiring redeployment. The UI has been completely rewritten but maintains API compatibility. Users will need to:
+1. Run `npm install` to get new dependencies
+2. Run `npm run build` to build with new system
+3. Redeploy with `npm run deploy`
+
+### 🔮 Future Roadmap
+- Reimplement Visual Table Builder with Preact
+- Add back column sorting and search/filter
+- Implement Edit/Delete row functionality
+- Add data export (CSV/JSON)
+- Consider dark mode with new architecture
+
+---
+
 ## [1.2.0] - 2024-12-03
 
 ### ✨ Added - Visual Table Designer
