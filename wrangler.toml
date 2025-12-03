@@ -20,8 +20,8 @@ bucket = "./dist"
 #
 # [[d1_databases]]
  binding = "DB"
- database_name = "d1-sql-studio-db"
-# database_id = "" # Paste your database ID here for local dev
+ database_name = "d1-sql-studio"
+ database_id = "984c094c-9302-4ba5-808d-b754443c4b82" # Paste your database ID here for local dev
 
 # Environment variables (Optional)
 # If not set, defaults to 'dev-api-key-change-in-production'
