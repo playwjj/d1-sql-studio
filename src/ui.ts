@@ -1997,7 +1997,8 @@ database_id = "你的-database-id"</pre>
 
                 let formHtml = '';
                 schemaResult.data.forEach(col => {
-                    if (col.pk && col.name === 'id') return;
+                    // Skip auto-increment INTEGER primary keys (typically 'id')
+                    if (col.pk && col.type.toUpperCase() === 'INTEGER' && col.name.toLowerCase() === 'id') return;
 
                     formHtml += \`
                         <div class="form-group">
@@ -2026,12 +2027,15 @@ database_id = "你的-database-id"</pre>
 
                 let formHtml = '';
                 schemaResult.data.forEach(col => {
-                    if (col.pk) return;
+                    // Show all fields, but make primary keys readonly
+                    const isReadonly = col.pk ? 'readonly' : '';
+                    const pkLabel = col.pk ? ' 🔑' : '';
+                    const style = col.pk ? 'style="background-color: var(--bg); cursor: not-allowed;"' : '';
 
                     formHtml += \`
                         <div class="form-group">
-                            <label>\${col.name} \${col.notnull ? '*' : ''}</label>
-                            <input type="text" class="form-control" name="\${col.name}" value="\${row[col.name] || ''}" \${col.notnull ? 'required' : ''}>
+                            <label>\${col.name}\${pkLabel} \${col.notnull && !col.pk ? '*' : ''}</label>
+                            <input type="text" class="form-control" name="\${col.name}" value="\${row[col.name] || ''}" \${col.notnull && !col.pk ? 'required' : ''} \${isReadonly} \${style}>
                         </div>
                     \`;
                 });

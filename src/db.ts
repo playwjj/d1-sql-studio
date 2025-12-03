@@ -5,7 +5,7 @@ export class D1Manager {
 
   async listTables(): Promise<TableInfo[]> {
     const result = await this.db
-      .prepare("SELECT name, type FROM sqlite_master WHERE type IN ('table', 'view') AND name NOT LIKE 'sqlite_%' ORDER BY name")
+      .prepare("SELECT name, type FROM sqlite_master WHERE type IN ('table', 'view') AND name NOT LIKE 'sqlite_%' AND name NOT LIKE '_cf_%' ORDER BY name")
       .all<TableInfo>();
 
     return result.results || [];
