@@ -1,14 +1,34 @@
-import { useState } from 'preact/hooks';
+import { useState, useEffect } from 'preact/hooks';
+import { ApiClient } from '../../lib/api';
 
 interface ApiDocumentationProps {
   tableName: string;
   apiUrl: string;
   apiKey: string;
+  apiClient: ApiClient;
 }
 
-export function ApiDocumentation({ tableName, apiUrl, apiKey }: ApiDocumentationProps) {
+export function ApiDocumentation({ tableName, apiUrl, apiKey, apiClient }: ApiDocumentationProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [copied, setCopied] = useState<string | null>(null);
+  const [columns, setColumns] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (isExpanded && columns.length === 0) {
+      loadSchema();
+    }
+  }, [isExpanded]);
+
+  const loadSchema = async () => {
+    try {
+      const result = await apiClient.getTableSchema(tableName);
+      if (result.success && result.data && Array.isArray(result.data)) {
+        setColumns(result.data);
+      }
+    } catch (err) {
+      console.error('Failed to load schema:', err);
+    }
+  };
 
   const handleCopy = (text: string, id: string) => {
     navigator.clipboard.writeText(text);
@@ -18,60 +38,107 @@ export function ApiDocumentation({ tableName, apiUrl, apiKey }: ApiDocumentation
 
   const baseUrl = apiUrl || window.location.origin;
 
+  // Get example columns (non-primary key columns for insert/update)
+  const exampleColumns = columns.filter(col => !col.pk).slice(0, 2);
+  const hasColumns = exampleColumns.length > 0;
+
+  // Generate example data based on real columns
+  const getExampleValue = (type: string) => {
+    const upperType = type.toUpperCase();
+    if (upperType.includes('INT')) return '123';
+    if (upperType.includes('REAL') || upperType.includes('FLOAT')) return '99.99';
+    if (upperType.includes('BOOL')) return 'true';
+    if (upperType.includes('DATE')) return '2024-01-01';
+    return '"example_value"';
+  };
+
+  const insertFields = hasColumns
+    ? exampleColumns.map(col => `  "${col.name}": ${getExampleValue(col.type)}`).join(',\n')
+    : '  "column1": "value1",\n  "column2": "value2"';
+
+  const updateFields = hasColumns && exampleColumns[0]
+    ? `  "${exampleColumns[0].name}": ${getExampleValue(exampleColumns[0].type)}`
+    : '  "column1": "new_value"';
+
   const examples = [
     {
       id: 'list',
       title: 'Get Table Data (Paginated)',
       method: 'GET',
-      endpoint: `/api/tables/${tableName}/rows?page=1&limit=50`,
       curl: `curl -X GET "${baseUrl}/api/tables/${tableName}/rows?page=1&limit=50" \\
   -H "Authorization: Bearer ${apiKey}"`,
-      description: 'Fetch paginated rows from the table'
+      description: 'Fetch paginated rows from the table',
+      response: `{
+  "success": true,
+  "data": [ /* array of rows */ ],
+  "meta": {
+    "page": 1,
+    "limit": 50,
+    "total": 150
+  }
+}`
     },
     {
       id: 'schema',
       title: 'Get Table Schema',
       method: 'GET',
-      endpoint: `/api/tables/${tableName}/schema`,
       curl: `curl -X GET "${baseUrl}/api/tables/${tableName}/schema" \\
   -H "Authorization: Bearer ${apiKey}"`,
-      description: 'Get table structure and column information'
+      description: 'Get table structure and column information',
+      response: `{
+  "success": true,
+  "data": [
+    {
+      "name": "id",
+      "type": "INTEGER",
+      "notnull": 1,
+      "pk": 1
+    }
+  ]
+}`
     },
     {
       id: 'insert',
       title: 'Insert Row',
       method: 'POST',
-      endpoint: `/api/tables/${tableName}/rows`,
       curl: `curl -X POST "${baseUrl}/api/tables/${tableName}/rows" \\
   -H "Authorization: Bearer ${apiKey}" \\
   -H "Content-Type: application/json" \\
   -d '{
-    "column1": "value1",
-    "column2": "value2"
-  }'`,
-      description: 'Add a new row to the table'
+${insertFields}
+}'`,
+      description: 'Add a new row to the table',
+      response: `{
+  "success": true,
+  "data": { /* inserted row data */ }
+}`
     },
     {
       id: 'update',
       title: 'Update Row',
       method: 'PUT',
-      endpoint: `/api/tables/${tableName}/rows/{id}`,
       curl: `curl -X PUT "${baseUrl}/api/tables/${tableName}/rows/1" \\
   -H "Authorization: Bearer ${apiKey}" \\
   -H "Content-Type: application/json" \\
   -d '{
-    "column1": "new_value"
-  }'`,
-      description: 'Update an existing row by ID'
+${updateFields}
+}'`,
+      description: 'Update an existing row by ID',
+      response: `{
+  "success": true,
+  "data": { /* updated row data */ }
+}`
     },
     {
       id: 'delete',
       title: 'Delete Row',
       method: 'DELETE',
-      endpoint: `/api/tables/${tableName}/rows/{id}`,
       curl: `curl -X DELETE "${baseUrl}/api/tables/${tableName}/rows/1" \\
   -H "Authorization: Bearer ${apiKey}"`,
-      description: 'Delete a row by ID'
+      description: 'Delete a row by ID',
+      response: `{
+  "success": true
+}`
     }
   ];
 
@@ -211,6 +278,36 @@ export function ApiDocumentation({ tableName, apiUrl, apiKey }: ApiDocumentation
                 }}>
                   {example.curl}
                 </pre>
+              </div>
+
+              <div style={{ marginTop: '12px' }}>
+                <div style={{ fontSize: '12px', fontWeight: '600', marginBottom: '8px', color: 'var(--text-primary)' }}>
+                  Response:
+                </div>
+                <div
+                  style={{
+                    background: '#000',
+                    padding: '16px',
+                    borderRadius: '6px',
+                    border: '1px solid #333',
+                    overflow: 'auto'
+                  }}
+                >
+                  <pre style={{
+                    margin: 0,
+                    padding: 0,
+                    background: 'none',
+                    border: 'none',
+                    color: '#4ade80',
+                    fontSize: '13px',
+                    lineHeight: '1.6',
+                    fontFamily: "'Consolas', 'Monaco', 'Courier New', monospace",
+                    whiteSpace: 'pre-wrap',
+                    wordBreak: 'break-all'
+                  }}>
+                    {example.response}
+                  </pre>
+                </div>
               </div>
             </div>
           ))}

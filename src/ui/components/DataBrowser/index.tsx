@@ -123,6 +123,7 @@ export function DataBrowser({ apiClient, tableName, apiKey }: DataBrowserProps) 
         tableName={tableName}
         apiUrl={window.location.origin}
         apiKey={apiKey || 'your-api-key'}
+        apiClient={apiClient}
       />
 
       <div style="overflow-x: auto;">
