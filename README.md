@@ -102,9 +102,9 @@ Deploy automatically via Cloudflare Dashboard connected to GitHub:
 
 3. **Configure build settings**
    - **Framework preset**: None
-   - **Build command**: `npm install && npm run build` (or leave empty if no build command)
-   - **Build output directory**: `/`
-   - **Root directory**: `/`
+   - **Build command**: `npm run build` (runs TypeScript type checking)
+   - **Build output directory**: `/` (leave as default)
+   - **Root directory**: `/` (leave as default)
 
 4. **Create and bind D1 database**
 
