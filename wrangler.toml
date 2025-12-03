@@ -15,11 +15,12 @@ database_name = "d1-sql-studio"
 database_id = "984c094c-9302-4ba5-808d-b754443c4b82"
 
 # Environment Variables
-# For Cloudflare Pages deployment, configure here and it will persist across deployments
-[vars]
-API_KEY = "your-production-api-key-change-me"
-
-# Security Note:
-# - If using PUBLIC GitHub repo: Use a strong, unique API key
-# - If using PRIVATE GitHub repo: Any API key is fine
-# - Generate strong key: openssl rand -base64 32
+# For Cloudflare Pages (GitHub integration), set in Dashboard:
+# Workers & Pages > [Your Pages Project] > Settings > Environment variables
+# Add: API_KEY = your-production-key (Production environment)
+#
+# For local development, use .dev.vars file (see .dev.vars.example)
+#
+# Only uncomment below if using private GitHub repo:
+# [vars]
+# API_KEY = "your-production-api-key"
