@@ -102,11 +102,14 @@ export function ApiDocumentation({ tableName, apiUrl, apiKey }: ApiDocumentation
           cursor: 'pointer',
           fontSize: '14px',
           fontWeight: '500',
-          color: 'var(--text-primary)'
+          color: 'var(--text-primary)',
+          transition: 'all 0.2s'
         }}
+        onMouseOver={(e) => (e.currentTarget.style.background = 'var(--hover-bg)')}
+        onMouseOut={(e) => (e.currentTarget.style.background = 'var(--card-bg)')}
       >
-        <span>=Ú REST API Documentation</span>
-        <span style={{ fontSize: '12px' }}>{isExpanded ? '¼' : '¶'}</span>
+        <span>ðŸ“š REST API Documentation</span>
+        <span style={{ fontSize: '12px' }}>{isExpanded ? 'â–¼' : 'â–¶'}</span>
       </button>
 
       {isExpanded && (
@@ -137,9 +140,9 @@ export function ApiDocumentation({ tableName, apiUrl, apiKey }: ApiDocumentation
                 <span
                   className="method-badge"
                   style={{
-                    padding: '2px 8px',
+                    padding: '4px 10px',
                     borderRadius: '4px',
-                    fontSize: '11px',
+                    fontSize: '12px',
                     fontWeight: '600',
                     color: '#fff',
                     background: getMethodColor(example.method)
@@ -147,21 +150,21 @@ export function ApiDocumentation({ tableName, apiUrl, apiKey }: ApiDocumentation
                 >
                   {example.method}
                 </span>
-                <span style={{ fontSize: '14px', fontWeight: '500' }}>{example.title}</span>
+                <span style={{ fontSize: '14px', fontWeight: '500', color: 'var(--text-primary)' }}>{example.title}</span>
               </div>
 
-              <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '8px' }}>
+              <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '12px' }}>
                 {example.description}
               </p>
 
               <div
                 style={{
                   position: 'relative',
-                  background: '#1e1e1e',
-                  padding: '12px',
-                  borderRadius: '4px',
-                  fontSize: '12px',
-                  fontFamily: 'monospace',
+                  background: '#0d1117',
+                  padding: '16px',
+                  paddingRight: '90px',
+                  borderRadius: '6px',
+                  border: '1px solid #30363d',
                   overflow: 'auto'
                 }}
               >
@@ -169,20 +172,40 @@ export function ApiDocumentation({ tableName, apiUrl, apiKey }: ApiDocumentation
                   onClick={() => handleCopy(example.curl, example.id)}
                   style={{
                     position: 'absolute',
-                    top: '8px',
-                    right: '8px',
-                    padding: '4px 8px',
-                    background: copied === example.id ? '#10b981' : '#374151',
+                    top: '12px',
+                    right: '12px',
+                    padding: '6px 12px',
+                    background: copied === example.id ? '#10b981' : '#21262d',
                     color: '#fff',
-                    border: 'none',
-                    borderRadius: '4px',
-                    fontSize: '11px',
-                    cursor: 'pointer'
+                    border: '1px solid #30363d',
+                    borderRadius: '6px',
+                    fontSize: '12px',
+                    cursor: 'pointer',
+                    fontWeight: '500',
+                    transition: 'all 0.2s'
+                  }}
+                  onMouseOver={(e) => {
+                    if (copied !== example.id) {
+                      e.currentTarget.style.background = '#30363d';
+                    }
+                  }}
+                  onMouseOut={(e) => {
+                    if (copied !== example.id) {
+                      e.currentTarget.style.background = '#21262d';
+                    }
                   }}
                 >
-                  {copied === example.id ? ' Copied' : '=Ë Copy'}
+                  {copied === example.id ? 'âœ“ Copied' : 'ðŸ“‹ Copy'}
                 </button>
-                <pre style={{ margin: 0, color: '#d4d4d4', whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>
+                <pre style={{
+                  margin: 0,
+                  color: '#e6edf3',
+                  fontSize: '13px',
+                  lineHeight: '1.6',
+                  fontFamily: "'Consolas', 'Monaco', 'Courier New', monospace",
+                  whiteSpace: 'pre-wrap',
+                  wordBreak: 'break-all'
+                }}>
                   {example.curl}
                 </pre>
               </div>
@@ -193,12 +216,14 @@ export function ApiDocumentation({ tableName, apiUrl, apiKey }: ApiDocumentation
             style={{
               marginTop: '16px',
               padding: '12px',
-              background: 'var(--info-bg)',
-              borderRadius: '4px',
-              fontSize: '12px'
+              background: 'rgba(56, 139, 253, 0.1)',
+              border: '1px solid rgba(56, 139, 253, 0.3)',
+              borderRadius: '6px',
+              fontSize: '12px',
+              color: 'var(--text-primary)'
             }}
           >
-            <strong>=¡ Tip:</strong> Replace the API key in examples with your actual key for authentication.
+            <strong>ðŸ’¡ Tip:</strong> Replace the API key in examples with your actual key for authentication.
           </div>
         </div>
       )}
