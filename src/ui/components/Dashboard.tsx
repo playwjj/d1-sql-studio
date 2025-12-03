@@ -81,6 +81,7 @@ export function Dashboard({ apiKey, onLogout }: DashboardProps) {
               <DataBrowser
                 apiClient={apiClient}
                 tableName={selectedTable}
+                apiKey={apiKey}
               />
             ) : (
               <div className="empty-state">

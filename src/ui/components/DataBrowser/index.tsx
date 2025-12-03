@@ -3,13 +3,15 @@ import { ApiClient } from '../../lib/api';
 import { Button, Alert } from '../shared';
 import { AddRowModal } from './AddRowModal';
 import { EditRowModal } from './EditRowModal';
+import { ApiDocumentation } from './ApiDocumentation';
 
 interface DataBrowserProps {
   apiClient: ApiClient;
   tableName: string;
+  apiKey?: string;
 }
 
-export function DataBrowser({ apiClient, tableName }: DataBrowserProps) {
+export function DataBrowser({ apiClient, tableName, apiKey }: DataBrowserProps) {
   const [data, setData] = useState<any[]>([]);
   const [columns, setColumns] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
@@ -116,6 +118,12 @@ export function DataBrowser({ apiClient, tableName }: DataBrowserProps) {
           </Button>
         </div>
       </div>
+
+      <ApiDocumentation
+        tableName={tableName}
+        apiUrl={window.location.origin}
+        apiKey={apiKey || 'your-api-key'}
+      />
 
       <div style="overflow-x: auto;">
         <table>
