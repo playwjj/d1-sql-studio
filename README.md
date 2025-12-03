@@ -46,21 +46,21 @@ A modern database management tool for Cloudflare D1, featuring a **beautiful Web
 - [Wrangler CLI](https://developers.cloudflare.com/workers/wrangler/)
 - Cloudflare account
 
-### ⚡ Zero-Config Installation (Development)
+### ⚡ Local Development Setup
 
-Get started in **3 simple steps** with minimal configuration:
+Get started with local development in **3 steps**:
 
 1. **Install dependencies**
    ```bash
    npm install
    ```
 
-2. **Create D1 database and configure**
+2. **Create and configure D1 database**
    ```bash
    npx wrangler d1 create d1-sql-studio-db
    ```
 
-   Copy the `database_id` from the output and paste it into `wrangler.toml`:
+   You'll get output with your `database_id`. Copy it, then edit `wrangler.toml` and uncomment lines 17-20:
    ```toml
    [[d1_databases]]
    binding = "DB"
@@ -77,13 +77,13 @@ Get started in **3 simple steps** with minimal configuration:
 
    **Default API Key**: `dev-api-key-change-in-production`
 
-That's it! No additional configuration needed for development.
+**Note**: Local development requires database configuration in `wrangler.toml`. For production deployment via GitHub, you can skip this and bind the database in Cloudflare Dashboard instead (see Option 1 below).
 
 ### 🚀 Production Deployment
 
-#### Option 1: GitHub Auto-Deploy (Recommended, Zero Config)
+#### Option 1: GitHub Auto-Deploy (Recommended, True Zero Config!)
 
-Deploy automatically via Cloudflare Dashboard connected to GitHub:
+Deploy first, configure later - no local setup required:
 
 1. **Push code to GitHub**
    ```bash
@@ -102,40 +102,41 @@ Deploy automatically via Cloudflare Dashboard connected to GitHub:
 
 3. **Configure build settings**
    - **Framework preset**: None
-   - **Build command**: `npm run build` (runs TypeScript type checking)
+   - **Build command**: `npm run build`
    - **Build output directory**: `/` (leave as default)
    - **Root directory**: `/` (leave as default)
-
-4. **Create and bind D1 database**
-
-   Before deployment, create D1 database:
-   ```bash
-   # Create database locally
-   npx wrangler d1 create d1-sql-studio-db
-   ```
-
-   Copy the `database_id` from output, then in Cloudflare Dashboard:
-   - Go to your Pages project → **Settings** → **Functions**
-   - Scroll to **D1 database bindings**
-   - Click **Add binding**
-   - Variable name: `DB`
-   - D1 database: Select `d1-sql-studio-db` (or create new database)
-   - Click **Save**
-
-5. **Set environment variables (Optional)**
-
-   In **Settings** → **Environment variables**:
-   - Click **Add variables**
-   - Name: `API_KEY`
-   - Value: Your custom key (or use default `dev-api-key-change-in-production`)
-   - Select environment: Production / Preview
-   - Click **Save**
-
-6. **Deploy**
    - Click **Save and Deploy**
-   - Every push to GitHub will auto-redeploy
 
-✅ **Done!** Now every push to GitHub automatically deploys your Worker.
+   The initial deployment will succeed (database binding happens next).
+
+4. **Bind D1 database in Dashboard**
+
+   After deployment completes:
+   - Go to your Pages project → **Settings** → **Functions**
+   - Scroll to **D1 database bindings** section
+   - Click **Add binding**
+   - **Variable name**: `DB` (must be exactly "DB")
+   - **D1 database**: Click "Select a database" → **Create a new database**
+     - Database name: `d1-sql-studio-db` (or any name you prefer)
+     - Click **Create**
+   - Click **Save**
+   - The app will automatically redeploy with database connected
+
+5. **Set API key (Optional)**
+
+   If you want a custom API key instead of the default:
+   - Go to **Settings** → **Environment variables**
+   - Click **Add variable**
+   - Name: `API_KEY`
+   - Value: Your custom key (generate with `openssl rand -base64 32`)
+   - Environment: Production / Preview / Both
+   - Click **Save**
+
+✅ **Done!** Your app is live. Access it at your Pages URL and login with:
+- Default API key: `dev-api-key-change-in-production`
+- Or your custom API key if you set one
+
+**Every push to GitHub will automatically redeploy.**
 
 #### Option 2: Local CLI Deploy (Quick Test)
 
