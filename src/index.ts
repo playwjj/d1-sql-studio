@@ -36,18 +36,38 @@ export default {
         );
       }
 
-      const router = new Router(env);
-      const response = await router.route(request);
+      try {
+        const router = new Router(env);
+        const response = await router.route(request);
 
-      const newHeaders = new Headers(response.headers);
-      Object.entries(corsHeaders()).forEach(([key, value]) => {
-        newHeaders.set(key, value);
-      });
+        const newHeaders = new Headers(response.headers);
+        Object.entries(corsHeaders()).forEach(([key, value]) => {
+          newHeaders.set(key, value);
+        });
 
-      return new Response(response.body, {
-        status: response.status,
-        headers: newHeaders,
-      });
+        return new Response(response.body, {
+          status: response.status,
+          headers: newHeaders,
+        });
+      } catch (error: any) {
+        if (error.message === 'DATABASE_NOT_BOUND') {
+          return new Response(
+            JSON.stringify({
+              success: false,
+              error: 'DATABASE_NOT_BOUND',
+              message: 'No D1 database is bound to this Worker. Please bind a database in Cloudflare Dashboard.'
+            }),
+            {
+              status: 503,
+              headers: {
+                'Content-Type': 'application/json',
+                ...corsHeaders(),
+              },
+            }
+          );
+        }
+        throw error;
+      }
     }
 
     return new Response('Not found', { status: 404 });

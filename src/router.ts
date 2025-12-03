@@ -5,6 +5,10 @@ export class Router {
   private dbManager: D1Manager;
 
   constructor(private env: Env) {
+    // Check if D1 database is bound
+    if (!env.DB) {
+      throw new Error('DATABASE_NOT_BOUND');
+    }
     this.dbManager = new D1Manager(env.DB);
   }
 

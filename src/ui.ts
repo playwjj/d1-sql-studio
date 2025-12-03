@@ -397,6 +397,12 @@ export function getAdminUI(): string {
             border: 1px solid #90cdf4;
         }
 
+        .alert-warning {
+            background: #fef3c7;
+            color: #92400e;
+            border: 1px solid #fbbf24;
+        }
+
         [data-theme="dark"] .alert-success {
             background: #065f46;
             color: #d1fae5;
@@ -413,6 +419,48 @@ export function getAdminUI(): string {
             background: #1e3a8a;
             color: #dbeafe;
             border-color: #2563eb;
+        }
+
+        [data-theme="dark"] .alert-warning {
+            background: #78350f;
+            color: #fef3c7;
+            border-color: #f59e0b;
+        }
+
+        .db-setup-guide {
+            margin-top: 20px;
+            padding: 20px;
+            background: var(--bg);
+            border-radius: 8px;
+            border-left: 4px solid var(--warning);
+        }
+
+        .db-setup-guide h4 {
+            color: var(--warning);
+            margin-bottom: 15px;
+        }
+
+        .db-setup-guide ol {
+            margin-left: 20px;
+            line-height: 1.8;
+        }
+
+        .db-setup-guide code {
+            background: var(--card-bg);
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            border: 1px solid var(--border);
+        }
+
+        .db-setup-guide a {
+            color: var(--primary);
+            text-decoration: none;
+        }
+
+        .db-setup-guide a:hover {
+            text-decoration: underline;
         }
 
         .pagination {
@@ -1543,6 +1591,9 @@ export function getAdminUI(): string {
                     localStorage.setItem('d1_api_key', apiKey);
                     initTheme();
                     loadTables();
+                } else if (result.error === 'DATABASE_NOT_BOUND') {
+                    // Show database setup guide
+                    showDatabaseSetupGuide();
                 } else {
                     throw new Error(result.error || 'Invalid API Key');
                 }
@@ -1551,6 +1602,63 @@ export function getAdminUI(): string {
                 document.getElementById('loginErrorText').textContent = error.message;
             }
         });
+
+        function showDatabaseSetupGuide() {
+            document.getElementById('loginPage').style.display = 'none';
+            document.getElementById('appContainer').classList.add('active');
+            localStorage.setItem('d1_api_key', document.getElementById('apiKey').value);
+            initTheme();
+
+            // Show database setup warning
+            const setupGuideHTML = \`
+                <div class="alert alert-warning">
+                    <span>⚠️</span>
+                    <span><strong>数据库未绑定</strong> - 请先绑定 D1 数据库才能使用此应用</span>
+                </div>
+                <div class="db-setup-guide">
+                    <h4>📚 如何绑定 D1 数据库</h4>
+                    <p>请按照以下步骤绑定数据库：</p>
+
+                    <h5 style="margin-top: 20px; margin-bottom: 10px;">方法一：在 Cloudflare Dashboard 中绑定（推荐）</h5>
+                    <ol>
+                        <li>登录 <a href="https://dash.cloudflare.com/" target="_blank">Cloudflare Dashboard</a></li>
+                        <li>进入 <strong>Workers & Pages</strong> 页面</li>
+                        <li>找到并点击你的 Worker 项目（<code>d1-sql-studio</code>）</li>
+                        <li>进入 <strong>Settings</strong> &gt; <strong>Bindings</strong></li>
+                        <li>在 <strong>D1 Database Bindings</strong> 部分点击 <strong>Add binding</strong></li>
+                        <li>设置：
+                            <ul>
+                                <li><strong>Variable name:</strong> <code>DB</code> (必须是 DB)</li>
+                                <li><strong>D1 database:</strong> 选择现有数据库或创建新数据库</li>
+                            </ul>
+                        </li>
+                        <li>点击 <strong>Save</strong> 保存</li>
+                        <li>等待几秒钟让配置生效</li>
+                        <li>刷新此页面重新登录</li>
+                    </ol>
+
+                    <h5 style="margin-top: 20px; margin-bottom: 10px;">方法二：在 wrangler.toml 中配置（本地开发）</h5>
+                    <ol>
+                        <li>创建 D1 数据库：<br><code>npx wrangler d1 create d1-sql-studio-db</code></li>
+                        <li>复制输出的 <code>database_id</code></li>
+                        <li>编辑 <code>wrangler.toml</code> 文件，取消注释并填写：
+                            <pre style="background: var(--card-bg); padding: 10px; border-radius: 4px; margin-top: 10px;">[[d1_databases]]
+binding = "DB"
+database_name = "d1-sql-studio-db"
+database_id = "你的-database-id"</pre>
+                        </li>
+                        <li>重启开发服务器：<code>npm run dev</code></li>
+                    </ol>
+
+                    <p style="margin-top: 20px;">
+                        <strong>注意：</strong>完成绑定后，请刷新此页面以重新连接数据库。
+                    </p>
+                </div>
+            \`;
+
+            document.getElementById('tablesContent').innerHTML = setupGuideHTML;
+            showView('tables');
+        }
 
         document.getElementById('logoutBtn').addEventListener('click', () => {
             localStorage.removeItem('d1_api_key');
