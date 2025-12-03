@@ -199,6 +199,9 @@ export function ApiDocumentation({ tableName, apiUrl, apiKey }: ApiDocumentation
                 </button>
                 <pre style={{
                   margin: 0,
+                  padding: 0,
+                  background: 'none',
+                  border: 'none',
                   color: '#fff',
                   fontSize: '14px',
                   lineHeight: '1.6',
