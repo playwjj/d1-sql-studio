@@ -1,0 +1,4 @@
+# Local Development Environment Variables
+# Copy this file to .dev.vars and fill in your actual values
+
+API_KEY=your-local-dev-api-key-here

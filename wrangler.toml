@@ -1,0 +1,14 @@
+name = "d1-sql-studio"
+main = "src/index.ts"
+compatibility_date = "2024-01-01"
+
+# D1 Database binding
+# Create D1 database first: wrangler d1 create d1-sql-studio-db
+[[d1_databases]]
+binding = "DB"
+database_name = "d1-sql-studio-db"
+database_id = "" # Fill in your actual database ID after creation
+
+# Environment variables
+[vars]
+API_KEY = "your-secret-api-key-here" # Used for API authentication
