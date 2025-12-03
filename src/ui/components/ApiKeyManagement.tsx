@@ -155,6 +155,16 @@ export function ApiKeyManagement({ apiClient }: ApiKeyManagementProps) {
                 placeholder="e.g., Production Key"
                 required
                 disabled={creatingKey}
+                style={{
+                  width: '100%',
+                  padding: '8px 12px',
+                  border: '1px solid var(--border-color)',
+                  borderRadius: '6px',
+                  background: 'var(--input-bg)',
+                  color: 'var(--text-primary)',
+                  fontFamily: 'inherit',
+                  fontSize: '14px'
+                }}
               />
             </div>
             <div className="form-group" style="margin-bottom: 12px;">
@@ -168,13 +178,14 @@ export function ApiKeyManagement({ apiClient }: ApiKeyManagementProps) {
                 style={{
                   width: '100%',
                   padding: '8px 12px',
-                  border: '1px solid var(--border-color)',
+                  border: '2px solid var(--border-color)',
                   borderRadius: '6px',
                   background: 'var(--input-bg)',
                   color: 'var(--text-primary)',
                   fontFamily: 'inherit',
                   fontSize: '14px',
-                  resize: 'vertical'
+                  resize: 'vertical',
+                  boxSizing: 'border-box'
                 }}
               />
             </div>
