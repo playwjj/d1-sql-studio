@@ -8,7 +8,7 @@ export function generateApiKey(): string {
 }
 
 // Store an API key in KV
-export async function createApiKey(env: Env, name: string): Promise<ApiKeyData> {
+export async function createApiKey(env: Env, name: string, description?: string): Promise<ApiKeyData> {
   if (!env.API_KEYS) {
     throw new Error('API_KEYS KV namespace not bound');
   }
@@ -23,6 +23,7 @@ export async function createApiKey(env: Env, name: string): Promise<ApiKeyData> 
   const keyData: ApiKeyData = {
     key,
     name,
+    description,
     createdAt: new Date().toISOString(),
   };
 
@@ -77,6 +78,7 @@ export async function listApiKeys(env: Env): Promise<Omit<ApiKeyData, 'key'>[]> 
         const data: ApiKeyData = JSON.parse(keyData);
         keys.push({
           name: data.name,
+          description: data.description,
           createdAt: data.createdAt,
           lastUsedAt: data.lastUsedAt,
         });

@@ -7,6 +7,7 @@ interface FirstTimeSetupProps {
 
 export function FirstTimeSetup({ onSetupComplete }: FirstTimeSetupProps) {
   const [name, setName] = useState('Default Key');
+  const [description, setDescription] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [generatedKey, setGeneratedKey] = useState<string | null>(null);
@@ -22,7 +23,10 @@ export function FirstTimeSetup({ onSetupComplete }: FirstTimeSetupProps) {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ name }),
+        body: JSON.stringify({
+          name,
+          description: description || undefined
+        }),
       });
 
       const result = await response.json();
@@ -77,6 +81,28 @@ export function FirstTimeSetup({ onSetupComplete }: FirstTimeSetupProps) {
               <small style="color: var(--text-secondary); margin-top: 4px; display: block;">
                 Give your API key a descriptive name (e.g., "Production Key", "Development Key")
               </small>
+            </div>
+
+            <div className="form-group">
+              <label>Description (Optional)</label>
+              <textarea
+                value={description}
+                onInput={(e) => setDescription((e.target as HTMLTextAreaElement).value)}
+                placeholder="e.g., Primary API key for production environment"
+                disabled={loading}
+                rows={3}
+                style={{
+                  width: '100%',
+                  padding: '8px 12px',
+                  border: '1px solid var(--border-color)',
+                  borderRadius: '6px',
+                  background: 'var(--input-bg)',
+                  color: 'var(--text-primary)',
+                  fontFamily: 'inherit',
+                  fontSize: '14px',
+                  resize: 'vertical'
+                }}
+              />
             </div>
 
             <Button variant="primary" type="submit" disabled={loading} className="btn-block">

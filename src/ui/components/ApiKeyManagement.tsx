@@ -8,6 +8,7 @@ interface ApiKeyManagementProps {
 
 interface ApiKeyInfo {
   name: string;
+  description?: string;
   createdAt: string;
   lastUsedAt?: string;
 }
@@ -22,6 +23,7 @@ export function ApiKeyManagement({ apiClient }: ApiKeyManagementProps) {
   const [error, setError] = useState('');
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [newKeyName, setNewKeyName] = useState('');
+  const [newKeyDescription, setNewKeyDescription] = useState('');
   const [creatingKey, setCreatingKey] = useState(false);
   const [generatedKey, setGeneratedKey] = useState<string | null>(null);
 
@@ -54,12 +56,16 @@ export function ApiKeyManagement({ apiClient }: ApiKeyManagementProps) {
     try {
       const result = await apiClient.request<ApiKeyData>('/api/keys', {
         method: 'POST',
-        body: JSON.stringify({ name: newKeyName }),
+        body: JSON.stringify({
+          name: newKeyName,
+          description: newKeyDescription || undefined
+        }),
       });
 
       if (result.success && result.data) {
         setGeneratedKey(result.data.key);
         setNewKeyName('');
+        setNewKeyDescription('');
         await loadKeys();
       } else {
         setError(result.error || 'Failed to create API key');
@@ -151,6 +157,27 @@ export function ApiKeyManagement({ apiClient }: ApiKeyManagementProps) {
                 disabled={creatingKey}
               />
             </div>
+            <div className="form-group" style="margin-bottom: 12px;">
+              <label>Description (Optional)</label>
+              <textarea
+                value={newKeyDescription}
+                onInput={(e) => setNewKeyDescription((e.target as HTMLTextAreaElement).value)}
+                placeholder="e.g., Used for production environment, full permissions, created in Jan 2025"
+                disabled={creatingKey}
+                rows={3}
+                style={{
+                  width: '100%',
+                  padding: '8px 12px',
+                  border: '1px solid var(--border-color)',
+                  borderRadius: '6px',
+                  background: 'var(--input-bg)',
+                  color: 'var(--text-primary)',
+                  fontFamily: 'inherit',
+                  fontSize: '14px',
+                  resize: 'vertical'
+                }}
+              />
+            </div>
             <Button variant="primary" type="submit" disabled={creatingKey}>
               {creatingKey ? 'Creating...' : 'Create Key'}
             </Button>
@@ -208,6 +235,7 @@ export function ApiKeyManagement({ apiClient }: ApiKeyManagementProps) {
             <thead>
               <tr>
                 <th>Name</th>
+                <th>Description</th>
                 <th>Created</th>
                 <th>Last Used</th>
                 <th style="width: 100px;">Actions</th>
@@ -218,6 +246,13 @@ export function ApiKeyManagement({ apiClient }: ApiKeyManagementProps) {
                 <tr key={idx}>
                   <td>
                     <strong>{key.name}</strong>
+                  </td>
+                  <td>
+                    {key.description ? (
+                      <span style="color: var(--text-secondary); font-size: 13px;">{key.description}</span>
+                    ) : (
+                      <span style="color: var(--text-light); font-style: italic;">—</span>
+                    )}
                   </td>
                   <td>{formatDate(key.createdAt)}</td>
                   <td>

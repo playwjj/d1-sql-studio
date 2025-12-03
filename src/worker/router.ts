@@ -168,7 +168,7 @@ export class Router {
   }
 
   private async createKey(request: Request): Promise<Response> {
-    const body = await request.json<{ name: string }>();
+    const body = await request.json<{ name: string; description?: string }>();
 
     // Check if this is first-time setup (no authentication header)
     const authHeader = request.headers.get('Authorization');
@@ -180,7 +180,7 @@ export class Router {
       }
     }
 
-    const keyData = await createApiKey(this.env, body.name);
+    const keyData = await createApiKey(this.env, body.name, body.description);
     return this.jsonResponse({ success: true, data: keyData });
   }
 

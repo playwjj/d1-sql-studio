@@ -38,6 +38,7 @@ export interface QueryRequest {
 export interface ApiKeyData {
   key: string;
   name: string;
+  description?: string;
   createdAt: string;
   lastUsedAt?: string;
 }
