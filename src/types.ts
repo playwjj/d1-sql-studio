@@ -1,6 +1,6 @@
 export interface Env {
   DB: D1Database;
-  API_KEY: string;
+  API_KEY?: string; // Optional: defaults to 'dev-api-key-change-in-production' if not set
 }
 
 export interface ApiResponse<T = any> {

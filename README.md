@@ -46,59 +46,135 @@ A modern database management tool for Cloudflare D1, featuring a **beautiful Web
 - [Wrangler CLI](https://developers.cloudflare.com/workers/wrangler/)
 - Cloudflare account
 
-### Installation
+### ⚡ Zero-Config Installation (Development)
+
+Get started in **3 simple steps** with minimal configuration:
 
 1. **Install dependencies**
    ```bash
    npm install
    ```
 
-2. **Create D1 database**
+2. **Create D1 database and configure**
    ```bash
    npx wrangler d1 create d1-sql-studio-db
    ```
 
-   You'll get output like this:
-   ```
-   ✅ Successfully created DB 'd1-sql-studio-db'
-
-   [[d1_databases]]
-   binding = "DB"
-   database_name = "d1-sql-studio-db"
-   database_id = "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
-   ```
-
-3. **Configure wrangler.toml**
-
-   Update `wrangler.toml` with your database ID:
+   Copy the `database_id` from the output and paste it into `wrangler.toml`:
    ```toml
    [[d1_databases]]
    binding = "DB"
    database_name = "d1-sql-studio-db"
-   database_id = "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"  # Your actual database ID
+   database_id = "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"  # Paste your ID here
    ```
 
-4. **Set API Key**
-
-   Edit `wrangler.toml` and set a strong API key:
-   ```toml
-   [vars]
-   API_KEY = "your-super-secret-key-change-this"
-   ```
-
-   ⚠️ **Security**: Use a strong password with at least 20 characters including uppercase, lowercase, numbers, and special characters.
-
-5. **Start development server**
+3. **Start development server**
    ```bash
    npm run dev
    ```
 
    Your app will be available at **http://localhost:8787**
 
-6. **Deploy to Cloudflare**
+   **Default API Key**: `dev-api-key-change-in-production`
+
+That's it! No additional configuration needed for development.
+
+### 🚀 Production Deployment
+
+#### Option 1: GitHub Auto-Deploy (Recommended, Zero Config)
+
+Deploy automatically via Cloudflare Dashboard connected to GitHub:
+
+1. **Push code to GitHub**
    ```bash
-   npm run deploy
+   git init
+   git add .
+   git commit -m "Initial commit"
+   git remote add origin https://github.com/your-username/d1-sql-studio.git
+   git push -u origin main
    ```
+
+2. **Create project in Cloudflare Dashboard**
+   - Visit [Cloudflare Dashboard](https://dash.cloudflare.com)
+   - Go to **Workers & Pages** → Click **Create Application**
+   - Select **Pages** tab → **Connect to Git**
+   - Authorize and select your GitHub repository
+
+3. **Configure build settings**
+   - **Framework preset**: None
+   - **Build command**: `npm install && npm run build` (or leave empty if no build command)
+   - **Build output directory**: `/`
+   - **Root directory**: `/`
+
+4. **Create and bind D1 database**
+
+   Before deployment, create D1 database:
+   ```bash
+   # Create database locally
+   npx wrangler d1 create d1-sql-studio-db
+   ```
+
+   Copy the `database_id` from output, then in Cloudflare Dashboard:
+   - Go to your Pages project → **Settings** → **Functions**
+   - Scroll to **D1 database bindings**
+   - Click **Add binding**
+   - Variable name: `DB`
+   - D1 database: Select `d1-sql-studio-db` (or create new database)
+   - Click **Save**
+
+5. **Set environment variables (Optional)**
+
+   In **Settings** → **Environment variables**:
+   - Click **Add variables**
+   - Name: `API_KEY`
+   - Value: Your custom key (or use default `dev-api-key-change-in-production`)
+   - Select environment: Production / Preview
+   - Click **Save**
+
+6. **Deploy**
+   - Click **Save and Deploy**
+   - Every push to GitHub will auto-redeploy
+
+✅ **Done!** Now every push to GitHub automatically deploys your Worker.
+
+#### Option 2: Local CLI Deploy (Quick Test)
+
+```bash
+npm run deploy
+```
+
+Uses default API key: `dev-api-key-change-in-production`
+
+#### Option 3: CLI Deploy with Custom Config
+
+**Method A: Via wrangler.toml**
+
+Uncomment and set in `wrangler.toml`:
+```toml
+[vars]
+API_KEY = "your-super-secret-production-key"
+```
+
+**Method B: Via Cloudflare Dashboard (Recommended)**
+
+1. Deploy worker: `npm run deploy`
+2. Visit [Cloudflare Dashboard](https://dash.cloudflare.com) → Workers & Pages
+3. Select your worker → Settings → Variables
+4. Add environment variable:
+   - Name: `API_KEY`
+   - Value: `your-super-secret-production-key`
+5. Click **Save and Deploy**
+
+**Method C: Via Wrangler Secret (Encrypted)**
+```bash
+npx wrangler secret put API_KEY
+# Enter your secret key when prompted
+```
+
+⚠️ **Security**: For production, always use a strong API key with 20+ characters including uppercase, lowercase, numbers, and special characters. Generate one with:
+```bash
+openssl rand -base64 32
+```
 
 ## 📖 Usage
 
@@ -106,7 +182,9 @@ A modern database management tool for Cloudflare D1, featuring a **beautiful Web
 
 1. **Open your browser** and navigate to your Worker URL (local: `http://localhost:8787`)
 
-2. **Login** with your API Key from `wrangler.toml`
+2. **Login** with your API Key:
+   - Development (default): `dev-api-key-change-in-production`
+   - Production: Your custom API key from environment variables or `wrangler.toml`
 
 3. **Manage your database**:
    - **📊 Tables** - View all tables, create new ones, inspect schemas, delete tables
@@ -489,13 +567,60 @@ cd examples
 | Setup | ~5 minutes | ~30 minutes | ~10 minutes |
 | Cost | Free tier available | Server costs | Free |
 
+## ⚙️ Configuration
+
+### Zero-Config Philosophy
+
+This project is designed for **minimal configuration**:
+- **Development**: Works out-of-the-box with default settings
+- **Production**: Configure only what you need via environment variables
+
+### Environment Variables
+
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `API_KEY` | No | `dev-api-key-change-in-production` | API authentication key |
+
+### Configuration Priority (from highest to lowest)
+
+1. **Wrangler Secrets** (most secure for production)
+   ```bash
+   npx wrangler secret put API_KEY
+   ```
+
+2. **Cloudflare Dashboard** → Settings → Environment Variables
+
+3. **wrangler.toml** `[vars]` section
+   ```toml
+   [vars]
+   API_KEY = "your-key"
+   ```
+
+4. **Default values** (hardcoded in code)
+
+### Database Binding
+
+The D1 database is automatically bound via `wrangler.toml`:
+```toml
+[[d1_databases]]
+binding = "DB"
+database_name = "d1-sql-studio-db"
+database_id = "your-database-id"
+```
+
+After binding, the database is accessible in code via `env.DB` - no additional configuration needed.
+
 ## 🐛 Troubleshooting
 
 ### Login fails with "Invalid API Key"
 
-- Check `wrangler.toml` for correct `API_KEY`
+- **Development**: Use default key `dev-api-key-change-in-production`
+- **Production**: Check your configured API_KEY in:
+  - Cloudflare Dashboard → Settings → Environment Variables
+  - Or `wrangler.toml` `[vars]` section
+  - Or wrangler secrets: `npx wrangler secret list`
 - Ensure no extra spaces in the key
-- Restart dev server: `npm run dev`
+- Restart dev server: `npm run dev` or redeploy: `npm run deploy`
 
 ### "Database not found" error
 
