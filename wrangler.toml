@@ -21,7 +21,7 @@ database_id = "984c094c-9302-4ba5-808d-b754443c4b82"
 #   3. Update the id below with your KV namespace ID for local development
 [[kv_namespaces]]
 binding = "API_KEYS"
-id = "preview_id"
+id = "34651a0906d343079dbb24822751a46a"
 preview_id = "preview_id"
 
 # Environment Variables
