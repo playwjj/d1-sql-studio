@@ -13,11 +13,11 @@ export interface ApiResponse<T = any> {
 export class ApiClient {
   constructor(private apiKey: string) {}
 
-  private async request<T>(
+  async request<T>(
     endpoint: string,
     options: RequestInit = {}
   ): Promise<ApiResponse<T>> {
-    const response = await fetch(`/api${endpoint}`, {
+    const response = await fetch(endpoint.startsWith('/api') ? endpoint : `/api${endpoint}`, {
       ...options,
       headers: {
         'Authorization': `Bearer ${this.apiKey}`,

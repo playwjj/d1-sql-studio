@@ -20,17 +20,25 @@ export default {
 
     // Handle API routes
     if (url.pathname.startsWith('/api/')) {
-      if (!authenticate(request, env)) {
-        return new Response(
-          JSON.stringify({ success: false, error: 'Unauthorized' }),
-          {
-            status: 401,
-            headers: {
-              'Content-Type': 'application/json',
-              ...corsHeaders(),
-            },
-          }
-        );
+      // Allow unauthenticated access to check keys status
+      const isKeysStatusCheck = url.pathname === '/api/keys/status' && request.method === 'GET';
+
+      // Allow unauthenticated key creation only if no keys exist
+      const isFirstKeyCreation = url.pathname === '/api/keys' && request.method === 'POST';
+
+      if (!isKeysStatusCheck && !isFirstKeyCreation) {
+        if (!(await authenticate(request, env))) {
+          return new Response(
+            JSON.stringify({ success: false, error: 'Unauthorized' }),
+            {
+              status: 401,
+              headers: {
+                'Content-Type': 'application/json',
+                ...corsHeaders(),
+              },
+            }
+          );
+        }
       }
 
       try {

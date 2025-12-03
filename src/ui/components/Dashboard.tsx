@@ -3,6 +3,7 @@ import { ApiClient } from '../lib/api';
 import { TablesView } from './Tables';
 import { DataBrowser } from './DataBrowser';
 import { QueryEditor } from './QueryEditor';
+import { ApiKeyManagement } from './ApiKeyManagement';
 
 interface DashboardProps {
   apiKey: string;
@@ -10,7 +11,7 @@ interface DashboardProps {
 }
 
 export function Dashboard({ apiKey, onLogout }: DashboardProps) {
-  const [currentView, setCurrentView] = useState<'tables' | 'data' | 'query'>('tables');
+  const [currentView, setCurrentView] = useState<'tables' | 'data' | 'query' | 'keys'>('tables');
   const [selectedTable, setSelectedTable] = useState<string>('');
 
   const apiClient = new ApiClient(apiKey);
@@ -50,6 +51,13 @@ export function Dashboard({ apiKey, onLogout }: DashboardProps) {
             <span className="nav-item-icon">⚡</span>
             <span>SQL Query</span>
           </div>
+          <div
+            className={`nav-item ${currentView === 'keys' ? 'active' : ''}`}
+            onClick={() => setCurrentView('keys')}
+          >
+            <span className="nav-item-icon">🔑</span>
+            <span>API Keys</span>
+          </div>
         </div>
 
         <div className="sidebar-footer">
@@ -65,6 +73,7 @@ export function Dashboard({ apiKey, onLogout }: DashboardProps) {
             {currentView === 'tables' && '📊 Tables'}
             {currentView === 'data' && `📝 Data Browser${selectedTable ? ` - ${selectedTable}` : ''}`}
             {currentView === 'query' && '⚡ SQL Query'}
+            {currentView === 'keys' && '🔑 API Keys'}
           </h2>
         </div>
 
@@ -100,6 +109,10 @@ export function Dashboard({ apiKey, onLogout }: DashboardProps) {
 
           {currentView === 'query' && (
             <QueryEditor apiClient={apiClient} />
+          )}
+
+          {currentView === 'keys' && (
+            <ApiKeyManagement apiClient={apiClient} />
           )}
         </div>
       </div>

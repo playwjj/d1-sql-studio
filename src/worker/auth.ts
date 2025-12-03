@@ -1,9 +1,10 @@
 import { Env } from './types';
+import { validateApiKey } from './apikeys';
 
 // Default API key for development - CHANGE THIS in production via environment variables
 const DEFAULT_API_KEY = 'dev-api-key-change-in-production';
 
-export function authenticate(request: Request, env: Env): boolean {
+export async function authenticate(request: Request, env: Env): Promise<boolean> {
   const authHeader = request.headers.get('Authorization');
 
   if (!authHeader) {
@@ -11,8 +12,14 @@ export function authenticate(request: Request, env: Env): boolean {
   }
 
   const token = authHeader.replace('Bearer ', '');
-  const apiKey = env.API_KEY || DEFAULT_API_KEY;
 
+  // Try KV-based validation first
+  if (env.API_KEYS) {
+    return await validateApiKey(env, token);
+  }
+
+  // Fallback to environment variable
+  const apiKey = env.API_KEY || DEFAULT_API_KEY;
   return token === apiKey;
 }
 

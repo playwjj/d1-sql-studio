@@ -1,5 +1,6 @@
 import { Env, ApiResponse } from './types';
 import { D1Manager } from './db';
+import { createApiKey, listApiKeys, deleteApiKey, hasAnyApiKeys } from './apikeys';
 
 export class Router {
   private dbManager: D1Manager;
@@ -18,6 +19,25 @@ export class Router {
     const method = request.method;
 
     try {
+      // API Key Management Routes
+      if (method === 'GET' && path === '/api/keys/status') {
+        return await this.checkKeysStatus();
+      }
+
+      if (method === 'POST' && path === '/api/keys') {
+        return await this.createKey(request);
+      }
+
+      if (method === 'GET' && path === '/api/keys') {
+        return await this.listKeys();
+      }
+
+      if (method === 'DELETE' && path.match(/^\/api\/keys\/[^/]+$/)) {
+        const name = decodeURIComponent(path.split('/')[3]);
+        return await this.deleteKey(name);
+      }
+
+      // Database Routes
       if (method === 'GET' && path === '/api/tables') {
         return await this.listTables();
       }
@@ -139,6 +159,39 @@ export class Router {
   private async deleteRow(tableName: string, id: string): Promise<Response> {
     const result = await this.dbManager.deleteRow(tableName, id);
     return this.jsonResponse({ success: true, data: result });
+  }
+
+  // API Key Management Methods
+  private async checkKeysStatus(): Promise<Response> {
+    const hasKeys = await hasAnyApiKeys(this.env);
+    return this.jsonResponse({ success: true, data: { hasKeys } });
+  }
+
+  private async createKey(request: Request): Promise<Response> {
+    const body = await request.json<{ name: string }>();
+
+    // Check if this is first-time setup (no authentication header)
+    const authHeader = request.headers.get('Authorization');
+    if (!authHeader) {
+      // Only allow if no keys exist yet
+      const hasKeys = await hasAnyApiKeys(this.env);
+      if (hasKeys) {
+        return this.jsonResponse({ success: false, error: 'Unauthorized' }, 401);
+      }
+    }
+
+    const keyData = await createApiKey(this.env, body.name);
+    return this.jsonResponse({ success: true, data: keyData });
+  }
+
+  private async listKeys(): Promise<Response> {
+    const keys = await listApiKeys(this.env);
+    return this.jsonResponse({ success: true, data: keys });
+  }
+
+  private async deleteKey(name: string): Promise<Response> {
+    await deleteApiKey(this.env, name);
+    return this.jsonResponse({ success: true });
   }
 
   private jsonResponse<T>(data: ApiResponse<T>, status: number = 200): Response {

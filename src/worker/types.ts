@@ -1,6 +1,7 @@
 export interface Env {
   DB: D1Database;
   API_KEY?: string; // Optional: defaults to 'dev-api-key-change-in-production' if not set
+  API_KEYS?: KVNamespace; // For storing multiple API keys
   __STATIC_CONTENT: KVNamespace; // For Workers Sites
 }
 
@@ -32,4 +33,11 @@ export interface ColumnInfo {
 export interface QueryRequest {
   sql: string;
   params?: any[];
+}
+
+export interface ApiKeyData {
+  key: string;
+  name: string;
+  createdAt: string;
+  lastUsedAt?: string;
 }
