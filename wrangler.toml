@@ -19,8 +19,8 @@ bucket = "./dist"
 #   3. Uncomment the [[d1_databases]] section below and paste your database_id
 #
 # [[d1_databases]]
-# binding = "DB"
-# database_name = "d1-sql-studio-db"
+ binding = "DB"
+ database_name = "d1-sql-studio-db"
 # database_id = "" # Paste your database ID here for local dev
 
 # Environment variables (Optional)
