@@ -14,7 +14,7 @@ export default {
     // Handle OPTIONS requests
     if (request.method === 'OPTIONS') {
       return new Response(null, {
-        headers: corsHeaders(),
+        headers: corsHeaders(request),
       });
     }
 
@@ -34,7 +34,7 @@ export default {
               status: 401,
               headers: {
                 'Content-Type': 'application/json',
-                ...corsHeaders(),
+                ...corsHeaders(request),
               },
             }
           );
@@ -46,7 +46,7 @@ export default {
         const response = await router.route(request);
 
         const newHeaders = new Headers(response.headers);
-        Object.entries(corsHeaders()).forEach(([key, value]) => {
+        Object.entries(corsHeaders(request)).forEach(([key, value]) => {
           newHeaders.set(key, value);
         });
 
@@ -66,7 +66,7 @@ export default {
               status: 503,
               headers: {
                 'Content-Type': 'application/json',
-                ...corsHeaders(),
+                ...corsHeaders(request),
               },
             }
           );
