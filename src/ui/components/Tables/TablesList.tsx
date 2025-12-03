@@ -12,9 +12,10 @@ interface TablesListProps {
   apiClient: ApiClient;
   onTableSelect: (tableName: string) => void;
   onCreateTable: () => void;
+  onVisualBuilder: () => void;
 }
 
-export function TablesList({ apiClient, onTableSelect, onCreateTable }: TablesListProps) {
+export function TablesList({ apiClient, onTableSelect, onCreateTable, onVisualBuilder }: TablesListProps) {
   const [tables, setTables] = useState<Table[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -107,9 +108,14 @@ export function TablesList({ apiClient, onTableSelect, onCreateTable }: TablesLi
           <div className="empty-state-icon">📊</div>
           <div className="empty-state-text">No Tables Yet</div>
           <div className="empty-state-subtext">Create your first table to get started</div>
-          <Button onClick={onCreateTable} variant="primary">
-            ➕ Create Table
-          </Button>
+          <div style="display: flex; gap: 12px; justify-content: center;">
+            <Button onClick={onVisualBuilder} variant="primary">
+              🎨 Visual Builder
+            </Button>
+            <Button onClick={onCreateTable} variant="secondary">
+              📝 SQL Editor
+            </Button>
+          </div>
         </div>
       </div>
     );
@@ -119,9 +125,14 @@ export function TablesList({ apiClient, onTableSelect, onCreateTable }: TablesLi
     <div>
       <div className="card-header">
         <h3>Tables ({tables.length})</h3>
-        <Button onClick={onCreateTable} variant="primary">
-          ➕ Create Table
-        </Button>
+        <div style="display: flex; gap: 10px;">
+          <Button onClick={onVisualBuilder} variant="primary" className="btn-sm">
+            🎨 Visual Builder
+          </Button>
+          <Button onClick={onCreateTable} variant="secondary" className="btn-sm">
+            📝 SQL Editor
+          </Button>
+        </div>
       </div>
 
       <table>
