@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'preact/hooks';
 import { ApiClient } from '../../lib/api';
 import { Button, Alert } from '../shared';
+import { AddRowModal } from './AddRowModal';
+import { EditRowModal } from './EditRowModal';
 
 interface DataBrowserProps {
   apiClient: ApiClient;
@@ -14,6 +16,9 @@ export function DataBrowser({ apiClient, tableName }: DataBrowserProps) {
   const [error, setError] = useState('');
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingRow, setEditingRow] = useState<any>(null);
   const limit = 50;
 
   useEffect(() => {
@@ -39,6 +44,40 @@ export function DataBrowser({ apiClient, tableName }: DataBrowserProps) {
       setError(err.message || 'Failed to load data');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleAddSuccess = () => {
+    setShowAddModal(false);
+    loadData();
+  };
+
+  const handleEditClick = (row: any) => {
+    setEditingRow(row);
+    setShowEditModal(true);
+  };
+
+  const handleEditSuccess = () => {
+    setShowEditModal(false);
+    setEditingRow(null);
+    loadData();
+  };
+
+  const handleDelete = async (row: any) => {
+    if (!confirm('Are you sure you want to delete this row?')) {
+      return;
+    }
+    try {
+      const primaryKey = columns[0];
+      const id = row[primaryKey];
+      const result = await apiClient.deleteRow(tableName, id);
+      if (result.success) {
+        loadData();
+      } else {
+        alert(result.error || 'Failed to delete row');
+      }
+    } catch (err: any) {
+      alert(err.message || 'Failed to delete row');
     }
   };
 
@@ -72,7 +111,7 @@ export function DataBrowser({ apiClient, tableName }: DataBrowserProps) {
       <div className="card-header">
         <h3>{tableName} ({total} rows)</h3>
         <div>
-          <Button variant="success" className="btn-sm">
+          <Button variant="success" className="btn-sm" onClick={() => setShowAddModal(true)}>
             ➕ Add Row
           </Button>
         </div>
@@ -102,8 +141,8 @@ export function DataBrowser({ apiClient, tableName }: DataBrowserProps) {
                 ))}
                 <td>
                   <div className="table-actions">
-                    <button className="btn btn-primary btn-sm">Edit</button>
-                    <button className="btn btn-danger btn-sm">Delete</button>
+                    <button className="btn btn-primary btn-sm" onClick={() => handleEditClick(row)}>Edit</button>
+                    <button className="btn btn-danger btn-sm" onClick={() => handleDelete(row)}>Delete</button>
                   </div>
                 </td>
               </tr>
@@ -131,6 +170,28 @@ export function DataBrowser({ apiClient, tableName }: DataBrowserProps) {
           Next →
         </Button>
       </div>
+
+      <AddRowModal
+        isOpen={showAddModal}
+        apiClient={apiClient}
+        tableName={tableName}
+        onClose={() => setShowAddModal(false)}
+        onSuccess={handleAddSuccess}
+      />
+
+      {editingRow && (
+        <EditRowModal
+          isOpen={showEditModal}
+          apiClient={apiClient}
+          tableName={tableName}
+          rowData={editingRow}
+          onClose={() => {
+            setShowEditModal(false);
+            setEditingRow(null);
+          }}
+          onSuccess={handleEditSuccess}
+        />
+      )}
     </div>
   );
 }
