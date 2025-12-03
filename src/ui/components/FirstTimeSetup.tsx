@@ -58,11 +58,9 @@ export function FirstTimeSetup({ onSetupComplete }: FirstTimeSetupProps) {
 
   return (
     <div className="login-container">
-      <div className="login-card">
-        <div className="login-header">
-          <h1>🔑 First Time Setup</h1>
-          <p>Welcome to D1 SQL Studio! Let's create your first API key.</p>
-        </div>
+      <div className="login-box">
+        <h1>🔑 First Time Setup</h1>
+        <p>Welcome to D1 SQL Studio! Let's create your first API key.</p>
 
         {error && <Alert variant="danger">{error}</Alert>}
 
@@ -72,13 +70,14 @@ export function FirstTimeSetup({ onSetupComplete }: FirstTimeSetupProps) {
               <label>API Key Name</label>
               <input
                 type="text"
+                className="form-control"
                 value={name}
                 onInput={(e) => setName((e.target as HTMLInputElement).value)}
                 placeholder="Enter a name for this key"
                 required
                 disabled={loading}
               />
-              <small style="color: var(--text-secondary); margin-top: 4px; display: block;">
+              <small style="color: var(--text-light); margin-top: 4px; display: block;">
                 Give your API key a descriptive name (e.g., "Production Key", "Development Key")
               </small>
             </div>
@@ -86,22 +85,13 @@ export function FirstTimeSetup({ onSetupComplete }: FirstTimeSetupProps) {
             <div className="form-group">
               <label>Description (Optional)</label>
               <textarea
+                className="form-control"
                 value={description}
                 onInput={(e) => setDescription((e.target as HTMLTextAreaElement).value)}
                 placeholder="e.g., Primary API key for production environment"
                 disabled={loading}
                 rows={3}
-                style={{
-                  width: '100%',
-                  padding: '8px 12px',
-                  border: '1px solid var(--border-color)',
-                  borderRadius: '6px',
-                  background: 'var(--input-bg)',
-                  color: 'var(--text-primary)',
-                  fontFamily: 'inherit',
-                  fontSize: '14px',
-                  resize: 'vertical'
-                }}
+                style={{ resize: 'vertical' }}
               />
             </div>
 
@@ -119,7 +109,7 @@ export function FirstTimeSetup({ onSetupComplete }: FirstTimeSetupProps) {
             </Alert>
 
             <div style="margin-top: 20px;">
-              <label style="display: block; margin-bottom: 8px; font-weight: 500;">
+              <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--text);">
                 Your API Key:
               </label>
               <div
@@ -169,10 +159,11 @@ export function FirstTimeSetup({ onSetupComplete }: FirstTimeSetupProps) {
             border: '1px solid rgba(56, 139, 253, 0.3)',
             borderRadius: '6px',
             fontSize: '13px',
+            color: 'var(--text)',
           }}
         >
           <strong>ℹ️ About API Keys</strong>
-          <p style="margin: 8px 0 0 0; line-height: 1.5;">
+          <p style="margin: 8px 0 0 0; line-height: 1.5; color: var(--text-light);">
             API keys are used to authenticate requests to your database. Keep them secure and never share them publicly.
           </p>
         </div>
