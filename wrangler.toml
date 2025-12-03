@@ -18,7 +18,7 @@ database_id = "984c094c-9302-4ba5-808d-b754443c4b82"
 # Declare the API_KEY here so Dashboard variables can override it
 # Dashboard: Workers & Pages > Your Worker > Settings > Variables and Secrets
 [vars]
-API_KEY = "M2Ez19gRu0Q1QJKxMuS0Uy5KtAWmDT20khaSQM2OKvw="
+API_KEY = ""
 
 # Note: The value above is a strong random key (32 bytes).
 # While visible in public repo, it's computationally infeasible to break.
