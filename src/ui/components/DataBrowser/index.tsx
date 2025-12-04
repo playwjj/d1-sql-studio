@@ -23,17 +23,35 @@ export function DataBrowser({ apiClient, tableName, apiKey }: DataBrowserProps) 
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingRow, setEditingRow] = useState<any>(null);
+  const [sortBy, setSortBy] = useState<string>('');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+  const [search, setSearch] = useState('');
+  const [searchInput, setSearchInput] = useState('');
   const limit = 50;
 
   useEffect(() => {
     loadData();
-  }, [tableName, page]);
+  }, [tableName, page, sortBy, sortOrder, search]);
+
+  useEffect(() => {
+    // Reset page when search or sort changes
+    if (page !== 1) {
+      setPage(1);
+    }
+  }, [search, sortBy, sortOrder]);
 
   const loadData = async () => {
     setLoading(true);
     setError('');
     try {
-      const result = await apiClient.getTableData(tableName, page, limit);
+      const result = await apiClient.getTableData(
+        tableName,
+        page,
+        limit,
+        sortBy || undefined,
+        sortOrder,
+        search || undefined
+      );
       if (result.success && result.data) {
         const dataArray = Array.isArray(result.data) ? result.data : [];
         setData(dataArray);
@@ -95,6 +113,27 @@ export function DataBrowser({ apiClient, tableName, apiKey }: DataBrowserProps) 
     }
   };
 
+  const handleSort = (column: string) => {
+    if (sortBy === column) {
+      // Toggle sort order if same column
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      // Set new column and default to ascending
+      setSortBy(column);
+      setSortOrder('asc');
+    }
+  };
+
+  const handleSearchSubmit = (e: Event) => {
+    e.preventDefault();
+    setSearch(searchInput);
+  };
+
+  const handleSearchClear = () => {
+    setSearchInput('');
+    setSearch('');
+  };
+
   if (loading) {
     return (
       <div className="loading">
@@ -131,6 +170,33 @@ export function DataBrowser({ apiClient, tableName, apiKey }: DataBrowserProps) 
         </div>
       </div>
 
+      <div className="card-body">
+        <form onSubmit={handleSearchSubmit} style="margin-bottom: 1rem;">
+          <div style="display: flex; gap: 0.5rem; align-items: center;">
+            <input
+              type="text"
+              placeholder="Search in text columns..."
+              value={searchInput}
+              onInput={(e) => setSearchInput((e.target as HTMLInputElement).value)}
+              style="flex: 1; padding: 0.5rem; border: 1px solid var(--border-color); border-radius: 4px; background: var(--bg-secondary); color: var(--text-color);"
+            />
+            <Button type="submit" variant="primary">
+              🔍 Search
+            </Button>
+            {search && (
+              <Button type="button" variant="secondary" onClick={handleSearchClear}>
+                ✕ Clear
+              </Button>
+            )}
+          </div>
+          {search && (
+            <div style="margin-top: 0.5rem; font-size: 0.875rem; color: var(--text-light);">
+              Showing results for: "{search}"
+            </div>
+          )}
+        </form>
+      </div>
+
       <ApiDocumentation
         tableName={tableName}
         apiUrl={window.location.origin}
@@ -143,7 +209,19 @@ export function DataBrowser({ apiClient, tableName, apiKey }: DataBrowserProps) 
           <thead>
             <tr>
               {columns.map(col => (
-                <th key={col}>{col}</th>
+                <th
+                  key={col}
+                  onClick={() => handleSort(col)}
+                  style="cursor: pointer; user-select: none;"
+                  title={`Click to sort by ${col}`}
+                >
+                  {col}
+                  {sortBy === col && (
+                    <span style="margin-left: 0.25rem;">
+                      {sortOrder === 'asc' ? '↑' : '↓'}
+                    </span>
+                  )}
+                </th>
               ))}
               <th style="width: 150px;">Actions</th>
             </tr>

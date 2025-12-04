@@ -65,7 +65,10 @@ export class Router {
         const tableName = path.split('/')[3];
         const page = parseInt(url.searchParams.get('page') || '1');
         const limit = parseInt(url.searchParams.get('limit') || '50');
-        return await this.getTableData(tableName, page, limit);
+        const sortBy = url.searchParams.get('sortBy') || undefined;
+        const sortOrder = (url.searchParams.get('sortOrder') || 'asc') as 'asc' | 'desc';
+        const search = url.searchParams.get('search') || undefined;
+        return await this.getTableData(tableName, page, limit, sortBy, sortOrder, search);
       }
 
       if (method === 'GET' && path.match(/^\/api\/tables\/[^/]+\/rows\/[^/]+$/)) {
@@ -184,8 +187,15 @@ export class Router {
     return this.jsonResponse({ success: true, data: result });
   }
 
-  private async getTableData(tableName: string, page: number, limit: number): Promise<Response> {
-    const result = await this.dbManager.getTableData(tableName, page, limit);
+  private async getTableData(
+    tableName: string,
+    page: number,
+    limit: number,
+    sortBy?: string,
+    sortOrder: 'asc' | 'desc' = 'asc',
+    search?: string
+  ): Promise<Response> {
+    const result = await this.dbManager.getTableData(tableName, page, limit, sortBy, sortOrder, search);
     return this.jsonResponse({
       success: true,
       data: result.data,

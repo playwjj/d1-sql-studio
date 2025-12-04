@@ -35,7 +35,14 @@ export class D1Manager {
     return await stmt.all();
   }
 
-  async getTableData(tableName: string, page: number = 1, limit: number = 50) {
+  async getTableData(
+    tableName: string,
+    page: number = 1,
+    limit: number = 50,
+    sortBy?: string,
+    sortOrder: 'asc' | 'desc' = 'asc',
+    search?: string
+  ) {
     // Validate table name to prevent SQL injection
     validateIdentifier(tableName, 'table name');
 
@@ -45,13 +52,52 @@ export class D1Manager {
 
     const quotedTable = quoteIdentifier(tableName);
 
+    // Build WHERE clause for search
+    let whereClause = '';
+    const searchParams: any[] = [];
+
+    if (search && search.trim()) {
+      // Get table schema to know which columns to search
+      const schema = await this.getTableSchema(tableName);
+      const textColumns = schema.filter(col =>
+        col.type.toUpperCase().includes('TEXT') ||
+        col.type.toUpperCase().includes('VARCHAR') ||
+        col.type.toUpperCase().includes('CHAR')
+      );
+
+      if (textColumns.length > 0) {
+        const searchConditions = textColumns.map(col =>
+          `${quoteIdentifier(col.name)} LIKE ?`
+        ).join(' OR ');
+        whereClause = ` WHERE (${searchConditions})`;
+
+        // Add search parameter for each column
+        const searchPattern = `%${search}%`;
+        textColumns.forEach(() => searchParams.push(searchPattern));
+      }
+    }
+
+    // Build ORDER BY clause
+    let orderByClause = '';
+    if (sortBy) {
+      validateIdentifier(sortBy, 'sort column');
+      const quotedSortColumn = quoteIdentifier(sortBy);
+      const direction = sortOrder.toLowerCase() === 'desc' ? 'DESC' : 'ASC';
+      orderByClause = ` ORDER BY ${quotedSortColumn} ${direction}`;
+    }
+
+    // Count query with search filter
+    const countQuery = `SELECT COUNT(*) as count FROM ${quotedTable}${whereClause}`;
     const countResult = await this.db
-      .prepare(`SELECT COUNT(*) as count FROM ${quotedTable}`)
+      .prepare(countQuery)
+      .bind(...searchParams)
       .first<{ count: number }>();
 
+    // Data query with search filter, sorting, and pagination
+    const dataQuery = `SELECT * FROM ${quotedTable}${whereClause}${orderByClause} LIMIT ? OFFSET ?`;
     const dataResult = await this.db
-      .prepare(`SELECT * FROM ${quotedTable} LIMIT ? OFFSET ?`)
-      .bind(validated.limit, offset)
+      .prepare(dataQuery)
+      .bind(...searchParams, validated.limit, offset)
       .all();
 
     return {

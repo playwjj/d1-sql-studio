@@ -37,8 +37,22 @@ export class ApiClient {
     return this.request(`/tables/${tableName}/schema`);
   }
 
-  async getTableData(tableName: string, page = 1, limit = 50) {
-    return this.request(`/tables/${tableName}/rows?page=${page}&limit=${limit}`);
+  async getTableData(
+    tableName: string,
+    page = 1,
+    limit = 50,
+    sortBy?: string,
+    sortOrder: 'asc' | 'desc' = 'asc',
+    search?: string
+  ) {
+    let url = `/tables/${tableName}/rows?page=${page}&limit=${limit}`;
+    if (sortBy) {
+      url += `&sortBy=${encodeURIComponent(sortBy)}&sortOrder=${sortOrder}`;
+    }
+    if (search) {
+      url += `&search=${encodeURIComponent(search)}`;
+    }
+    return this.request(url);
   }
 
   async executeQuery(sql: string, params?: any[]) {
