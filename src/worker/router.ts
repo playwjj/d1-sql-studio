@@ -1,6 +1,7 @@
 import { Env, ApiResponse } from './types';
 import { D1Manager } from './db';
 import { createApiKey, listApiKeys, deleteApiKey, hasAnyApiKeys } from './apikeys';
+import { validateSQLStatement } from './security';
 
 export class Router {
   private dbManager: D1Manager;
@@ -111,12 +112,44 @@ export class Router {
 
   private async executeQuery(request: Request): Promise<Response> {
     const body = await request.json<{ sql: string; params?: any[] }>();
+
+    // SECURITY: Validate SQL to allow data operations (SELECT, INSERT, UPDATE, DELETE, PRAGMA)
+    // Still blocks dangerous schema changes (DROP, CREATE, ALTER, TRUNCATE)
+    validateSQLStatement(body.sql);
+
     const result = await this.dbManager.executeQuery(body.sql, body.params);
     return this.jsonResponse({ success: true, data: result });
   }
 
   private async createTable(request: Request): Promise<Response> {
     const body = await request.json<{ sql: string }>();
+
+    // SECURITY: Validate CREATE TABLE statement
+    if (!body.sql || typeof body.sql !== 'string') {
+      return this.jsonResponse({ success: false, error: 'Invalid SQL: must be a non-empty string' }, 400);
+    }
+
+    const trimmed = body.sql.trim().toUpperCase();
+
+    // Only allow CREATE TABLE statements
+    if (!trimmed.startsWith('CREATE TABLE')) {
+      return this.jsonResponse({ success: false, error: 'Only CREATE TABLE statements are allowed' }, 400);
+    }
+
+    // Check for dangerous keywords that shouldn't be in CREATE TABLE
+    const dangerousInCreateTable = ['DROP', 'DELETE', 'INSERT', 'UPDATE', 'EXEC', 'EXECUTE', 'ALTER'];
+    for (const keyword of dangerousInCreateTable) {
+      if (trimmed.includes(keyword)) {
+        return this.jsonResponse({ success: false, error: `CREATE TABLE statement cannot contain keyword: ${keyword}` }, 400);
+      }
+    }
+
+    // Check for multiple statements
+    const statements = body.sql.split(';').filter(s => s.trim());
+    if (statements.length > 1) {
+      return this.jsonResponse({ success: false, error: 'Multiple SQL statements not allowed' }, 400);
+    }
+
     const result = await this.dbManager.createTable(body.sql);
     return this.jsonResponse({ success: true, data: result });
   }

@@ -45,6 +45,14 @@ export function QueryEditor({ apiClient }: QueryEditorProps) {
 
   return (
     <div>
+      <Alert variant="info">
+        <strong>🔒 Security Notice</strong>
+        <p style="margin: 8px 0 0 0; line-height: 1.6;">
+          <strong>Allowed:</strong> SELECT, INSERT, UPDATE, DELETE, PRAGMA<br/>
+          <strong>Blocked:</strong> DROP, CREATE, ALTER, TRUNCATE (use dedicated UI features for schema changes)
+        </p>
+      </Alert>
+
       <div className="card">
         <div className="card-header">
           <h3>SQL Query Editor</h3>
@@ -60,7 +68,7 @@ export function QueryEditor({ apiClient }: QueryEditorProps) {
         <div className="form-group">
           <textarea
             className="form-control"
-            placeholder="Enter your SQL query here...&#10;&#10;Example:&#10;SELECT * FROM users LIMIT 10;"
+            placeholder="Enter your SQL query here...&#10;&#10;Examples:&#10;SELECT * FROM users LIMIT 10;&#10;UPDATE users SET name = 'John' WHERE id = 1;&#10;DELETE FROM users WHERE id = 5;"
             value={sql}
             onInput={(e) => setSql((e.target as HTMLTextAreaElement).value)}
             onKeyDown={handleKeyDown}
