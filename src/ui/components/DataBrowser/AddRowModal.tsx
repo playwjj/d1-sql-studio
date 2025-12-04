@@ -162,8 +162,8 @@ export function AddRowModal({ isOpen, onClose, apiClient, tableName, onSuccess }
               <div key={col.name} className="form-group">
                 <label htmlFor={`field-${col.name}`}>
                   {col.name}
-                  {col.pk && <span style="color: var(--warning); margin-left: 4px;">🔑</span>}
-                  {col.notnull && !col.pk && <span style="color: var(--danger); margin-left: 4px;">*</span>}
+                  {!!col.pk && <span style="color: var(--warning); margin-left: 4px;">🔑</span>}
+                  {!!col.notnull && !col.pk && <span style="color: var(--danger); margin-left: 4px;">*</span>}
                   <span style="color: var(--text-light); font-size: 12px; margin-left: 8px;">
                     ({col.type})
                   </span>
