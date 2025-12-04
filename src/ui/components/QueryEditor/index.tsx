@@ -96,7 +96,7 @@ export function QueryEditor({ apiClient }: QueryEditorProps) {
 
           {result.results && result.results.length > 0 ? (
             <div style="overflow-x: auto;">
-              <table>
+              <table className="data-table">
                 <thead>
                   <tr>
                     {Object.keys(result.results[0]).map(col => (

@@ -205,7 +205,7 @@ export function DataBrowser({ apiClient, tableName, apiKey }: DataBrowserProps) 
       />
 
       <div style="overflow-x: auto;">
-        <table>
+        <table className="data-table">
           <thead>
             <tr>
               {columns.map(col => (
@@ -223,7 +223,7 @@ export function DataBrowser({ apiClient, tableName, apiKey }: DataBrowserProps) 
                   )}
                 </th>
               ))}
-              <th style="width: 150px;">Actions</th>
+              <th style="width: 120px;">Actions</th>
             </tr>
           </thead>
           <tbody>

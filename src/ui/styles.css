@@ -484,6 +484,82 @@ tbody tr:last-child td:last-child {
   border-bottom-right-radius: 8px;
 }
 
+/* Data Table - Compact style for displaying large datasets */
+table.data-table {
+  border-radius: 6px;
+  font-size: 13px;
+  border: 1px solid var(--border);
+}
+
+table.data-table th {
+  background: var(--bg-secondary);
+  padding: 8px 12px;
+  font-weight: 600;
+  font-size: 12px;
+  text-transform: none;
+  letter-spacing: 0.02em;
+  color: var(--text-secondary);
+  border-bottom: 2px solid var(--border);
+  white-space: nowrap;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+table.data-table th:first-child {
+  border-top-left-radius: 6px;
+}
+
+table.data-table th:last-child {
+  border-top-right-radius: 6px;
+}
+
+table.data-table td {
+  padding: 6px 12px;
+  border-bottom: 1px solid var(--border-light);
+  background: var(--card-bg);
+  font-size: 13px;
+  line-height: 1.4;
+  max-width: 400px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+table.data-table tbody tr:nth-child(even) td {
+  background: var(--bg);
+}
+
+table.data-table tbody tr:hover td {
+  background: rgba(129, 140, 248, 0.08);
+}
+
+table.data-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+table.data-table tbody tr:last-child td:first-child {
+  border-bottom-left-radius: 6px;
+}
+
+table.data-table tbody tr:last-child td:last-child {
+  border-bottom-right-radius: 6px;
+}
+
+table.data-table .table-actions {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+table.data-table .table-actions .btn {
+  padding: 4px 10px;
+  font-size: 12px;
+  border-radius: 4px;
+  line-height: 1.2;
+}
+
 /* Modal - Enhanced */
 .modal-overlay {
   position: fixed;
