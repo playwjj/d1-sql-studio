@@ -63,10 +63,12 @@ export function useFormValidation(rules: ValidationRules) {
 
   const validate = useCallback((formData: { [key: string]: any }): boolean => {
     const newErrors: ValidationErrors = {};
+    const newTouched: { [key: string]: boolean } = {};
     let isValid = true;
 
     Object.keys(rules).forEach((name) => {
       const error = validateField(name, formData[name]);
+      newTouched[name] = true; // Mark all validated fields as touched
       if (error) {
         newErrors[name] = error;
         isValid = false;
@@ -74,6 +76,7 @@ export function useFormValidation(rules: ValidationRules) {
     });
 
     setErrors(newErrors);
+    setTouched(prev => ({ ...prev, ...newTouched })); // Merge with existing touched state
     return isValid;
   }, [rules, validateField]);
 
