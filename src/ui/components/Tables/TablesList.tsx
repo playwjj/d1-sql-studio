@@ -14,9 +14,10 @@ interface TablesListProps {
   onTableSelect: (tableName: string) => void;
   onCreateTable: () => void;
   onVisualBuilder: () => void;
+  onEditTable: (tableName: string) => void;
 }
 
-export function TablesList({ apiClient, onTableSelect, onCreateTable, onVisualBuilder }: TablesListProps) {
+export function TablesList({ apiClient, onTableSelect, onCreateTable, onVisualBuilder, onEditTable }: TablesListProps) {
   const { showToast, showConfirm } = useNotification();
   const [tables, setTables] = useState<Table[]>([]);
   const [loading, setLoading] = useState(true);
@@ -169,7 +170,14 @@ export function TablesList({ apiClient, onTableSelect, onCreateTable, onVisualBu
                     variant="primary"
                     className="btn-sm"
                   >
-                    📝 Browse Data
+                    📊 Browse Data
+                  </Button>
+                  <Button
+                    onClick={() => onEditTable(table.name)}
+                    variant="secondary"
+                    className="btn-sm"
+                  >
+                    ✏️ Edit Structure
                   </Button>
                   <Button
                     onClick={() => handleDelete(table.name)}

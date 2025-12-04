@@ -94,6 +94,31 @@ export class Router {
         return await this.deleteRow(tableName, id);
       }
 
+      // Table schema modification routes
+      if (method === 'POST' && path.match(/^\/api\/tables\/[^/]+\/columns$/)) {
+        const tableName = decodeURIComponent(path.split('/')[3]);
+        return await this.addColumn(request, tableName);
+      }
+
+      if (method === 'DELETE' && path.match(/^\/api\/tables\/[^/]+\/columns\/[^/]+$/)) {
+        const parts = path.split('/');
+        const tableName = decodeURIComponent(parts[3]);
+        const columnName = decodeURIComponent(parts[5]);
+        return await this.dropColumn(tableName, columnName);
+      }
+
+      if (method === 'PUT' && path.match(/^\/api\/tables\/[^/]+\/columns\/[^/]+$/)) {
+        const parts = path.split('/');
+        const tableName = decodeURIComponent(parts[3]);
+        const oldColumnName = decodeURIComponent(parts[5]);
+        return await this.renameColumn(request, tableName, oldColumnName);
+      }
+
+      if (method === 'PUT' && path.match(/^\/api\/tables\/[^/]+\/rename$/)) {
+        const tableName = decodeURIComponent(path.split('/')[3]);
+        return await this.renameTable(request, tableName);
+      }
+
       return this.jsonResponse({ success: false, error: 'Not found' }, 404);
     } catch (error: any) {
       return this.jsonResponse({ success: false, error: error.message }, 500);
@@ -225,6 +250,45 @@ export class Router {
   private async deleteKey(name: string): Promise<Response> {
     await deleteApiKey(this.env, name);
     return this.jsonResponse({ success: true });
+  }
+
+  // Table schema modification methods
+  private async addColumn(request: Request, tableName: string): Promise<Response> {
+    const body = await request.json<{ columnName: string; columnType: string; constraints?: string }>();
+
+    if (!body.columnName || !body.columnType) {
+      return this.jsonResponse({ success: false, error: 'Column name and type are required' }, 400);
+    }
+
+    const result = await this.dbManager.addColumn(tableName, body.columnName, body.columnType, body.constraints);
+    return this.jsonResponse({ success: true, data: result });
+  }
+
+  private async dropColumn(tableName: string, columnName: string): Promise<Response> {
+    const result = await this.dbManager.dropColumn(tableName, columnName);
+    return this.jsonResponse({ success: true, data: result });
+  }
+
+  private async renameColumn(request: Request, tableName: string, oldColumnName: string): Promise<Response> {
+    const body = await request.json<{ newColumnName: string }>();
+
+    if (!body.newColumnName) {
+      return this.jsonResponse({ success: false, error: 'New column name is required' }, 400);
+    }
+
+    const result = await this.dbManager.renameColumn(tableName, oldColumnName, body.newColumnName);
+    return this.jsonResponse({ success: true, data: result });
+  }
+
+  private async renameTable(request: Request, tableName: string): Promise<Response> {
+    const body = await request.json<{ newTableName: string }>();
+
+    if (!body.newTableName) {
+      return this.jsonResponse({ success: false, error: 'New table name is required' }, 400);
+    }
+
+    const result = await this.dbManager.renameTable(tableName, body.newTableName);
+    return this.jsonResponse({ success: true, data: result });
   }
 
   private jsonResponse<T>(data: ApiResponse<T>, status: number = 200): Response {

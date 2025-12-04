@@ -80,4 +80,31 @@ export class ApiClient {
       method: 'DELETE',
     });
   }
+
+  async addColumn(tableName: string, columnName: string, columnType: string, constraints?: string) {
+    return this.request(`/tables/${tableName}/columns`, {
+      method: 'POST',
+      body: JSON.stringify({ columnName, columnType, constraints }),
+    });
+  }
+
+  async dropColumn(tableName: string, columnName: string) {
+    return this.request(`/tables/${tableName}/columns/${columnName}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async renameColumn(tableName: string, oldColumnName: string, newColumnName: string) {
+    return this.request(`/tables/${tableName}/columns/${oldColumnName}`, {
+      method: 'PUT',
+      body: JSON.stringify({ newColumnName }),
+    });
+  }
+
+  async renameTable(oldTableName: string, newTableName: string) {
+    return this.request(`/tables/${oldTableName}/rename`, {
+      method: 'PUT',
+      body: JSON.stringify({ newTableName }),
+    });
+  }
 }

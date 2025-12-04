@@ -178,4 +178,67 @@ export class D1Manager {
 
     return await this.db.prepare(`DROP TABLE ${quotedTable}`).run();
   }
+
+  async addColumn(tableName: string, columnName: string, columnType: string, constraints?: string) {
+    // Validate identifiers to prevent SQL injection
+    validateIdentifier(tableName, 'table name');
+    validateIdentifier(columnName, 'column name');
+
+    const quotedTable = quoteIdentifier(tableName);
+    const quotedColumn = quoteIdentifier(columnName);
+
+    // Validate column type (must be a valid SQLite type)
+    const validTypes = ['INTEGER', 'TEXT', 'REAL', 'BLOB', 'NUMERIC'];
+    const upperType = columnType.toUpperCase();
+    if (!validTypes.some(type => upperType.startsWith(type))) {
+      throw new Error(`Invalid column type: ${columnType}. Must be one of: ${validTypes.join(', ')}`);
+    }
+
+    // Build the column definition
+    let columnDef = `${quotedColumn} ${columnType}`;
+    if (constraints) {
+      columnDef += ` ${constraints}`;
+    }
+
+    const sql = `ALTER TABLE ${quotedTable} ADD COLUMN ${columnDef}`;
+    return await this.db.prepare(sql).run();
+  }
+
+  async dropColumn(tableName: string, columnName: string) {
+    // Validate identifiers to prevent SQL injection
+    validateIdentifier(tableName, 'table name');
+    validateIdentifier(columnName, 'column name');
+
+    const quotedTable = quoteIdentifier(tableName);
+    const quotedColumn = quoteIdentifier(columnName);
+
+    const sql = `ALTER TABLE ${quotedTable} DROP COLUMN ${quotedColumn}`;
+    return await this.db.prepare(sql).run();
+  }
+
+  async renameColumn(tableName: string, oldColumnName: string, newColumnName: string) {
+    // Validate identifiers to prevent SQL injection
+    validateIdentifier(tableName, 'table name');
+    validateIdentifier(oldColumnName, 'old column name');
+    validateIdentifier(newColumnName, 'new column name');
+
+    const quotedTable = quoteIdentifier(tableName);
+    const quotedOldColumn = quoteIdentifier(oldColumnName);
+    const quotedNewColumn = quoteIdentifier(newColumnName);
+
+    const sql = `ALTER TABLE ${quotedTable} RENAME COLUMN ${quotedOldColumn} TO ${quotedNewColumn}`;
+    return await this.db.prepare(sql).run();
+  }
+
+  async renameTable(oldTableName: string, newTableName: string) {
+    // Validate identifiers to prevent SQL injection
+    validateIdentifier(oldTableName, 'old table name');
+    validateIdentifier(newTableName, 'new table name');
+
+    const quotedOldTable = quoteIdentifier(oldTableName);
+    const quotedNewTable = quoteIdentifier(newTableName);
+
+    const sql = `ALTER TABLE ${quotedOldTable} RENAME TO ${quotedNewTable}`;
+    return await this.db.prepare(sql).run();
+  }
 }
