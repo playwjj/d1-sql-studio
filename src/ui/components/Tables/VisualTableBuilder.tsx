@@ -1,7 +1,9 @@
 import { useState } from 'preact/hooks';
 import { Modal } from '../shared/Modal';
 import { Button } from '../shared/Button';
+import { FormField } from '../shared/FormField';
 import { useNotification } from '../../contexts/NotificationContext';
+import { useFormValidation } from '../../hooks/useFormValidation';
 
 interface Field {
   id: string;
@@ -51,6 +53,20 @@ export function VisualTableBuilder({ isOpen, onClose, onSuccess, apiClient }: Vi
   ]);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  const { errors, touched, validate, handleBlur, clearAllErrors } = useFormValidation({
+    tableName: {
+      required: true,
+      minLength: 1,
+      maxLength: 64,
+      custom: (value) => {
+        if (value && !/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(value)) {
+          return 'Table name must start with a letter or underscore and contain only letters, numbers, and underscores';
+        }
+        return null;
+      }
+    }
+  });
 
   const addField = () => {
     const newField: Field = {
@@ -160,11 +176,12 @@ export function VisualTableBuilder({ isOpen, onClose, onSuccess, apiClient }: Vi
     e.preventDefault();
     setError('');
 
-    if (!tableName.trim()) {
-      setError('Please enter a table name');
+    // Validate table name
+    if (!validate({ tableName })) {
       return;
     }
 
+    // Validate field names
     if (fields.some((f) => !f.name.trim())) {
       setError('All fields must have names');
       return;
@@ -177,6 +194,7 @@ export function VisualTableBuilder({ isOpen, onClose, onSuccess, apiClient }: Vi
       const result = await apiClient.createTable(sql);
       if (result.success) {
         showToast({ message: 'Table created successfully!', variant: 'success' });
+        clearAllErrors();
         onSuccess();
         handleClose();
       } else {
@@ -204,6 +222,7 @@ export function VisualTableBuilder({ isOpen, onClose, onSuccess, apiClient }: Vi
       },
     ]);
     setError('');
+    clearAllErrors();
     onClose();
   };
 
@@ -219,18 +238,24 @@ export function VisualTableBuilder({ isOpen, onClose, onSuccess, apiClient }: Vi
             </div>
           )}
 
-          <div className="form-group">
-            <label htmlFor="tableName">Table Name *</label>
+          <FormField
+            label="Table Name"
+            name="tableName"
+            error={errors.tableName}
+            touched={touched.tableName}
+            required
+            hint="Must start with a letter or underscore, contain only letters, numbers, and underscores"
+          >
             <input
               type="text"
               id="tableName"
-              className="form-control"
+              className={`form-control ${errors.tableName && touched.tableName ? 'error' : ''}`}
               placeholder="e.g., users, products, orders"
               value={tableName}
               onInput={(e) => setTableName((e.target as HTMLInputElement).value)}
-              required
+              onBlur={() => handleBlur('tableName', tableName)}
             />
-          </div>
+          </FormField>
 
           <div className="field-builder">
             <div className="field-builder-header">
@@ -248,10 +273,9 @@ export function VisualTableBuilder({ isOpen, onClose, onSuccess, apiClient }: Vi
                     <input
                       type="text"
                       className="form-control field-name-input"
-                      placeholder="Field name"
+                      placeholder="Field name (required)"
                       value={field.name}
                       onInput={(e) => updateField(field.id, { name: (e.target as HTMLInputElement).value })}
-                      required
                     />
                     <button
                       type="button"

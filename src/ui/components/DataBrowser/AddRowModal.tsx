@@ -183,7 +183,6 @@ export function AddRowModal({ isOpen, onClose, apiClient, tableName, onSuccess }
                       ? 'Required'
                       : 'Optional'
                   }
-                  required={col.notnull && col.dflt_value === null && !col.pk}
                 />
               </div>
             ))}

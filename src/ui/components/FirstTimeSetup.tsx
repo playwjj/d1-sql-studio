@@ -1,6 +1,7 @@
 import { useState } from 'preact/hooks';
-import { Button, Alert } from './shared';
+import { Button, Alert, FormField } from './shared';
 import { useNotification } from '../contexts/NotificationContext';
+import { useFormValidation } from '../hooks/useFormValidation';
 
 interface FirstTimeSetupProps {
   onSetupComplete: (apiKey: string) => void;
@@ -14,10 +15,33 @@ export function FirstTimeSetup({ onSetupComplete }: FirstTimeSetupProps) {
   const [error, setError] = useState('');
   const [generatedKey, setGeneratedKey] = useState<string | null>(null);
 
+  const { errors, touched, validate, handleBlur, clearAllErrors } = useFormValidation({
+    keyName: {
+      required: true,
+      minLength: 3,
+      maxLength: 50,
+      custom: (value) => {
+        if (value && !/^[a-zA-Z0-9\s_-]+$/.test(value)) {
+          return 'Key name can only contain letters, numbers, spaces, hyphens, and underscores';
+        }
+        return null;
+      }
+    },
+    keyDescription: {
+      maxLength: 200,
+    }
+  });
+
   const handleGenerate = async (e: Event) => {
     e.preventDefault();
     setLoading(true);
     setError('');
+
+    // Validate form
+    if (!validate({ keyName: name, keyDescription: description })) {
+      setLoading(false);
+      return;
+    }
 
     try {
       const response = await fetch('/api/keys', {
@@ -35,6 +59,7 @@ export function FirstTimeSetup({ onSetupComplete }: FirstTimeSetupProps) {
 
       if (result.success && result.data) {
         setGeneratedKey(result.data.key);
+        clearAllErrors();
       } else {
         setError(result.error || 'Failed to generate API key');
       }
@@ -68,34 +93,43 @@ export function FirstTimeSetup({ onSetupComplete }: FirstTimeSetupProps) {
 
         {!generatedKey ? (
           <form onSubmit={handleGenerate}>
-            <div className="form-group">
-              <label>API Key Name</label>
+            <FormField
+              label="API Key Name"
+              name="keyName"
+              error={errors.keyName}
+              touched={touched.keyName}
+              required
+              hint="3-50 characters, letters, numbers, spaces, hyphens, and underscores"
+            >
               <input
                 type="text"
-                className="form-control"
+                className={`form-control ${errors.keyName && touched.keyName ? 'error' : ''}`}
                 value={name}
                 onInput={(e) => setName((e.target as HTMLInputElement).value)}
-                placeholder="Enter a name for this key"
-                required
+                onBlur={() => handleBlur('keyName', name)}
+                placeholder="e.g., Production Key, Development Key"
                 disabled={loading}
               />
-              <small style="color: var(--text-light); margin-top: 4px; display: block;">
-                Give your API key a descriptive name (e.g., "Production Key", "Development Key")
-              </small>
-            </div>
+            </FormField>
 
-            <div className="form-group">
-              <label>Description (Optional)</label>
+            <FormField
+              label="Description (Optional)"
+              name="keyDescription"
+              error={errors.keyDescription}
+              touched={touched.keyDescription}
+              hint="Optional description for this API key (max 200 characters)"
+            >
               <textarea
-                className="form-control"
+                className={`form-control ${errors.keyDescription && touched.keyDescription ? 'error' : ''}`}
                 value={description}
                 onInput={(e) => setDescription((e.target as HTMLTextAreaElement).value)}
+                onBlur={() => handleBlur('keyDescription', description)}
                 placeholder="e.g., Primary API key for production environment"
                 disabled={loading}
                 rows={3}
                 style={{ resize: 'vertical' }}
               />
-            </div>
+            </FormField>
 
             <Button variant="primary" type="submit" disabled={loading} className="btn-block">
               {loading ? 'Generating...' : 'Generate API Key'}

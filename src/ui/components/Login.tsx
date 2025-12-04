@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'preact/hooks';
 import { ApiClient } from '../lib/api';
+import { FormField } from './shared';
+import { useFormValidation } from '../hooks/useFormValidation';
 
 interface LoginProps {
   onLogin: (apiKey: string) => void;
@@ -12,6 +14,13 @@ export function Login({ onLogin, savedApiKey }: LoginProps) {
   const [loading, setLoading] = useState(false);
   const [autoLoginAttempted, setAutoLoginAttempted] = useState(false);
 
+  const { errors, touched, validate, handleBlur } = useFormValidation({
+    apiKey: {
+      required: true,
+      minLength: 10,
+    }
+  });
+
   useEffect(() => {
     if (savedApiKey && !autoLoginAttempted) {
       setAutoLoginAttempted(true);
@@ -22,6 +31,12 @@ export function Login({ onLogin, savedApiKey }: LoginProps) {
   const handleSubmit = async (e: Event) => {
     e.preventDefault();
     setError('');
+
+    // Skip validation for auto-login
+    if (!autoLoginAttempted && !validate({ apiKey })) {
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -56,19 +71,25 @@ export function Login({ onLogin, savedApiKey }: LoginProps) {
         )}
 
         <form onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label htmlFor="apiKey">API Key</label>
+          <FormField
+            label="API Key"
+            name="apiKey"
+            error={errors.apiKey}
+            touched={touched.apiKey}
+            required
+            hint="Your API key should be at least 10 characters"
+          >
             <input
               type="password"
               id="apiKey"
-              className="form-control"
+              className={`form-control ${errors.apiKey && touched.apiKey ? 'error' : ''}`}
               placeholder="Enter your API key"
               value={apiKey}
               onInput={(e) => setApiKey((e.target as HTMLInputElement).value)}
-              required
+              onBlur={() => handleBlur('apiKey', apiKey)}
               disabled={loading}
             />
-          </div>
+          </FormField>
           <button type="submit" className="btn btn-primary btn-block" disabled={loading}>
             🔐 {loading ? 'Authenticating...' : 'Login'}
           </button>

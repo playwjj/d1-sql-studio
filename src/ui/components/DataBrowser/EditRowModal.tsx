@@ -170,7 +170,6 @@ export function EditRowModal({
                   onInput={(e) => updateField(col.name, (e.target as HTMLInputElement).value)}
                   disabled={col.pk}
                   placeholder={col.pk ? 'Primary key (read-only)' : col.notnull ? 'Required' : 'Optional'}
-                  required={col.notnull && col.dflt_value === null && !col.pk}
                   style={col.pk ? 'background: var(--bg); cursor: not-allowed;' : ''}
                 />
               </div>

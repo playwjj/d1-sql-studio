@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'preact/hooks';
 import { ApiClient } from '../lib/api';
-import { Button, Alert } from './shared';
+import { Button, Alert, FormField } from './shared';
 import { useNotification } from '../contexts/NotificationContext';
+import { useFormValidation } from '../hooks/useFormValidation';
 
 interface ApiKeyManagementProps {
   apiClient: ApiClient;
@@ -29,6 +30,23 @@ export function ApiKeyManagement({ apiClient }: ApiKeyManagementProps) {
   const [creatingKey, setCreatingKey] = useState(false);
   const [generatedKey, setGeneratedKey] = useState<string | null>(null);
 
+  const { errors, touched, validate, handleBlur, clearAllErrors } = useFormValidation({
+    keyName: {
+      required: true,
+      minLength: 3,
+      maxLength: 50,
+      custom: (value) => {
+        if (value && !/^[a-zA-Z0-9\s_-]+$/.test(value)) {
+          return 'Key name can only contain letters, numbers, spaces, hyphens, and underscores';
+        }
+        return null;
+      }
+    },
+    keyDescription: {
+      maxLength: 200,
+    }
+  });
+
   useEffect(() => {
     loadKeys();
   }, []);
@@ -55,6 +73,12 @@ export function ApiKeyManagement({ apiClient }: ApiKeyManagementProps) {
     setCreatingKey(true);
     setError('');
 
+    // Validate form
+    if (!validate({ keyName: newKeyName, keyDescription: newKeyDescription })) {
+      setCreatingKey(false);
+      return;
+    }
+
     try {
       const result = await apiClient.request<ApiKeyData>('/api/keys', {
         method: 'POST',
@@ -68,6 +92,7 @@ export function ApiKeyManagement({ apiClient }: ApiKeyManagementProps) {
         setGeneratedKey(result.data.key);
         setNewKeyName('');
         setNewKeyDescription('');
+        clearAllErrors();
         await loadKeys();
       } else {
         setError(result.error || 'Failed to create API key');
@@ -157,29 +182,41 @@ export function ApiKeyManagement({ apiClient }: ApiKeyManagementProps) {
         >
           <h4 style="margin-bottom: 12px;">Create New API Key</h4>
           <form onSubmit={handleCreateKey}>
-            <div className="form-group">
-              <label>Key Name</label>
+            <FormField
+              label="Key Name"
+              name="keyName"
+              error={errors.keyName}
+              touched={touched.keyName}
+              required
+              hint="3-50 characters, letters, numbers, spaces, hyphens, and underscores"
+            >
               <input
                 type="text"
-                className="form-control"
+                className={`form-control ${errors.keyName && touched.keyName ? 'error' : ''}`}
                 value={newKeyName}
                 onInput={(e) => setNewKeyName((e.target as HTMLInputElement).value)}
+                onBlur={() => handleBlur('keyName', newKeyName)}
                 placeholder="e.g., Production Key"
-                required
                 disabled={creatingKey}
               />
-            </div>
-            <div className="form-group">
-              <label>Description (Optional)</label>
+            </FormField>
+            <FormField
+              label="Description (Optional)"
+              name="keyDescription"
+              error={errors.keyDescription}
+              touched={touched.keyDescription}
+              hint="Optional description for this API key (max 200 characters)"
+            >
               <textarea
-                className="form-control"
+                className={`form-control ${errors.keyDescription && touched.keyDescription ? 'error' : ''}`}
                 value={newKeyDescription}
                 onInput={(e) => setNewKeyDescription((e.target as HTMLTextAreaElement).value)}
+                onBlur={() => handleBlur('keyDescription', newKeyDescription)}
                 placeholder="e.g., Used for production environment, full permissions, created in Jan 2025"
                 disabled={creatingKey}
                 rows={3}
               />
-            </div>
+            </FormField>
             <Button variant="primary" type="submit" disabled={creatingKey}>
               {creatingKey ? 'Creating...' : 'Create Key'}
             </Button>

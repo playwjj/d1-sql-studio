@@ -152,6 +152,58 @@ body {
   border-color: #cbd5e1;
 }
 
+.form-control.error {
+  border-color: var(--danger);
+}
+
+.form-control.error:focus {
+  border-color: var(--danger);
+  box-shadow: 0 0 0 3px rgba(251, 113, 133, 0.1);
+}
+
+/* Form Error Message */
+.form-error {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+  padding: 8px 12px;
+  background: rgba(251, 113, 133, 0.1);
+  border-left: 3px solid var(--danger);
+  border-radius: 4px;
+  font-size: 13px;
+  color: var(--danger-dark);
+  animation: slideDown 0.2s ease-out;
+}
+
+.form-error-icon {
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.form-error-message {
+  line-height: 1.4;
+}
+
+/* Form Hint */
+.form-hint {
+  margin-top: 6px;
+  font-size: 13px;
+  color: var(--text-light);
+  line-height: 1.4;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 /* Buttons - Refined Design */
 .btn {
   padding: 11px 24px;
