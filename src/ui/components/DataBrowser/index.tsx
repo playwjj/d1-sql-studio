@@ -4,6 +4,7 @@ import { Button, Alert } from '../shared';
 import { AddRowModal } from './AddRowModal';
 import { EditRowModal } from './EditRowModal';
 import { ApiDocumentation } from './ApiDocumentation';
+import { useNotification } from '../../contexts/NotificationContext';
 
 interface DataBrowserProps {
   apiClient: ApiClient;
@@ -12,6 +13,7 @@ interface DataBrowserProps {
 }
 
 export function DataBrowser({ apiClient, tableName, apiKey }: DataBrowserProps) {
+  const { showToast, showConfirm } = useNotification();
   const [data, setData] = useState<any[]>([]);
   const [columns, setColumns] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
@@ -66,20 +68,30 @@ export function DataBrowser({ apiClient, tableName, apiKey }: DataBrowserProps) 
   };
 
   const handleDelete = async (row: any) => {
-    if (!confirm('Are you sure you want to delete this row?')) {
+    const confirmed = await showConfirm({
+      title: 'Delete Row',
+      message: 'Are you sure you want to delete this row?',
+      variant: 'danger',
+      confirmText: 'Delete',
+      cancelText: 'Cancel',
+    });
+
+    if (!confirmed) {
       return;
     }
+
     try {
       const primaryKey = columns[0];
       const id = row[primaryKey];
       const result = await apiClient.deleteRow(tableName, id);
       if (result.success) {
+        showToast({ message: 'Row deleted successfully', variant: 'success' });
         loadData();
       } else {
-        alert(result.error || 'Failed to delete row');
+        showToast({ message: result.error || 'Failed to delete row', variant: 'danger' });
       }
     } catch (err: any) {
-      alert(err.message || 'Failed to delete row');
+      showToast({ message: err.message || 'Failed to delete row', variant: 'danger' });
     }
   };
 

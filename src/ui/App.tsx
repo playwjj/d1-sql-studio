@@ -2,6 +2,7 @@ import { useState, useEffect } from 'preact/hooks';
 import { Login } from './components/Login';
 import { Dashboard } from './components/Dashboard';
 import { FirstTimeSetup } from './components/FirstTimeSetup';
+import { NotificationProvider } from './contexts/NotificationContext';
 
 export function App() {
   // Synchronously initialize from localStorage to avoid timing issues
@@ -49,22 +50,20 @@ export function App() {
     handleLogin(key);
   };
 
-  if (checkingKeys) {
-    return (
-      <div className="loading">
-        <div className="spinner"></div>
-        <p>Loading...</p>
-      </div>
-    );
-  }
-
-  if (hasKeys === false) {
-    return <FirstTimeSetup onSetupComplete={handleSetupComplete} />;
-  }
-
-  if (!isAuthenticated) {
-    return <Login onLogin={handleLogin} savedApiKey={apiKey} />;
-  }
-
-  return <Dashboard apiKey={apiKey} onLogout={handleLogout} />;
+  return (
+    <NotificationProvider>
+      {checkingKeys ? (
+        <div className="loading">
+          <div className="spinner"></div>
+          <p>Loading...</p>
+        </div>
+      ) : hasKeys === false ? (
+        <FirstTimeSetup onSetupComplete={handleSetupComplete} />
+      ) : !isAuthenticated ? (
+        <Login onLogin={handleLogin} savedApiKey={apiKey} />
+      ) : (
+        <Dashboard apiKey={apiKey} onLogout={handleLogout} />
+      )}
+    </NotificationProvider>
+  );
 }

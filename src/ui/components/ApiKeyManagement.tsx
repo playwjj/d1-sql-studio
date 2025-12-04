@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'preact/hooks';
 import { ApiClient } from '../lib/api';
 import { Button, Alert } from './shared';
+import { useNotification } from '../contexts/NotificationContext';
 
 interface ApiKeyManagementProps {
   apiClient: ApiClient;
@@ -18,6 +19,7 @@ interface ApiKeyData extends ApiKeyInfo {
 }
 
 export function ApiKeyManagement({ apiClient }: ApiKeyManagementProps) {
+  const { showToast, showConfirm } = useNotification();
   const [keys, setKeys] = useState<ApiKeyInfo[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -78,7 +80,15 @@ export function ApiKeyManagement({ apiClient }: ApiKeyManagementProps) {
   };
 
   const handleDeleteKey = async (name: string) => {
-    if (!confirm('Are you sure you want to delete this API key? This action cannot be undone.')) {
+    const confirmed = await showConfirm({
+      title: 'Delete API Key',
+      message: 'Are you sure you want to delete this API key? This action cannot be undone.',
+      variant: 'danger',
+      confirmText: 'Delete',
+      cancelText: 'Cancel',
+    });
+
+    if (!confirmed) {
       return;
     }
 
@@ -89,17 +99,18 @@ export function ApiKeyManagement({ apiClient }: ApiKeyManagementProps) {
 
       if (result.success) {
         await loadKeys();
+        showToast({ message: 'API key deleted successfully', variant: 'success' });
       } else {
-        alert(result.error || 'Failed to delete API key');
+        showToast({ message: result.error || 'Failed to delete API key', variant: 'danger' });
       }
     } catch (err: any) {
-      alert(err.message || 'Failed to delete API key');
+      showToast({ message: err.message || 'Failed to delete API key', variant: 'danger' });
     }
   };
 
   const handleCopy = (key: string) => {
     navigator.clipboard.writeText(key);
-    alert('API key copied to clipboard!');
+    showToast({ message: 'API key copied to clipboard!', variant: 'success' });
   };
 
   const formatDate = (dateString: string) => {

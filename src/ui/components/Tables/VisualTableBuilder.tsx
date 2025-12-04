@@ -1,6 +1,7 @@
 import { useState } from 'preact/hooks';
 import { Modal } from '../shared/Modal';
 import { Button } from '../shared/Button';
+import { useNotification } from '../../contexts/NotificationContext';
 
 interface Field {
   id: string;
@@ -34,6 +35,7 @@ const FIELD_TYPES = [
 ];
 
 export function VisualTableBuilder({ isOpen, onClose, onSuccess, apiClient }: VisualTableBuilderProps) {
+  const { showToast } = useNotification();
   const [tableName, setTableName] = useState('');
   const [fields, setFields] = useState<Field[]>([
     {
@@ -174,7 +176,7 @@ export function VisualTableBuilder({ isOpen, onClose, onSuccess, apiClient }: Vi
     try {
       const result = await apiClient.createTable(sql);
       if (result.success) {
-        alert('Table created successfully!');
+        showToast({ message: 'Table created successfully!', variant: 'success' });
         onSuccess();
         handleClose();
       } else {

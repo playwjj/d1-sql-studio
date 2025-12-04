@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'preact/hooks';
 import { Modal, Button, Alert } from '../shared';
 import { ApiClient } from '../../lib/api';
+import { useNotification } from '../../contexts/NotificationContext';
 
 interface Column {
   name: string;
@@ -27,6 +28,7 @@ export function EditRowModal({
   rowData,
   onSuccess,
 }: EditRowModalProps) {
+  const { showToast } = useNotification();
   const [schema, setSchema] = useState<Column[]>([]);
   const [formData, setFormData] = useState<Record<string, any>>({});
   const [loading, setLoading] = useState(false);
@@ -115,7 +117,7 @@ export function EditRowModal({
 
       const result = await apiClient.updateRow(tableName, rowData[primaryKey], submitData);
       if (result.success) {
-        alert('Row updated successfully!');
+        showToast({ message: 'Row updated successfully!', variant: 'success' });
         onSuccess();
         handleClose();
       } else {

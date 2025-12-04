@@ -2,6 +2,7 @@ import { useState, useEffect } from 'preact/hooks';
 import { ApiClient } from '../../lib/api';
 import { Button } from '../shared';
 import { Alert } from '../shared/Alert';
+import { useNotification } from '../../contexts/NotificationContext';
 
 interface Table {
   name: string;
@@ -16,6 +17,7 @@ interface TablesListProps {
 }
 
 export function TablesList({ apiClient, onTableSelect, onCreateTable, onVisualBuilder }: TablesListProps) {
+  const { showToast, showConfirm } = useNotification();
   const [tables, setTables] = useState<Table[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -45,20 +47,28 @@ export function TablesList({ apiClient, onTableSelect, onCreateTable, onVisualBu
   };
 
   const handleDelete = async (tableName: string) => {
-    if (!confirm(`Are you sure you want to delete table "${tableName}"?`)) {
+    const confirmed = await showConfirm({
+      title: 'Delete Table',
+      message: `Are you sure you want to delete table "${tableName}"?`,
+      variant: 'danger',
+      confirmText: 'Delete',
+      cancelText: 'Cancel',
+    });
+
+    if (!confirmed) {
       return;
     }
 
     try {
       const result = await apiClient.deleteTable(tableName);
       if (result.success) {
-        alert('Table deleted successfully!');
+        showToast({ message: 'Table deleted successfully!', variant: 'success' });
         loadTables();
       } else {
         throw new Error(result.error);
       }
     } catch (err: any) {
-      alert(`Error: ${err.message}`);
+      showToast({ message: `Error: ${err.message}`, variant: 'danger' });
     }
   };
 

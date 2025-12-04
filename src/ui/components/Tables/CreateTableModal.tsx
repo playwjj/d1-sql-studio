@@ -1,6 +1,7 @@
 import { useState } from 'preact/hooks';
 import { Modal, Button, Alert } from '../shared';
 import { ApiClient } from '../../lib/api';
+import { useNotification } from '../../contexts/NotificationContext';
 
 interface CreateTableModalProps {
   isOpen: boolean;
@@ -10,6 +11,7 @@ interface CreateTableModalProps {
 }
 
 export function CreateTableModal({ isOpen, onClose, apiClient, onSuccess }: CreateTableModalProps) {
+  const { showToast } = useNotification();
   const [sql, setSql] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -22,7 +24,7 @@ export function CreateTableModal({ isOpen, onClose, apiClient, onSuccess }: Crea
     try {
       const result = await apiClient.createTable(sql);
       if (result.success) {
-        alert('Table created successfully!');
+        showToast({ message: 'Table created successfully!', variant: 'success' });
         setSql('');
         onSuccess();
         onClose();

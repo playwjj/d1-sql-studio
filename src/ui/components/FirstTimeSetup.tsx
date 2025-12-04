@@ -1,11 +1,13 @@
 import { useState } from 'preact/hooks';
 import { Button, Alert } from './shared';
+import { useNotification } from '../contexts/NotificationContext';
 
 interface FirstTimeSetupProps {
   onSetupComplete: (apiKey: string) => void;
 }
 
 export function FirstTimeSetup({ onSetupComplete }: FirstTimeSetupProps) {
+  const { showToast } = useNotification();
   const [name, setName] = useState('Default Key');
   const [description, setDescription] = useState('');
   const [loading, setLoading] = useState(false);
@@ -52,7 +54,7 @@ export function FirstTimeSetup({ onSetupComplete }: FirstTimeSetupProps) {
   const handleCopy = () => {
     if (generatedKey) {
       navigator.clipboard.writeText(generatedKey);
-      alert('API key copied to clipboard!');
+      showToast({ message: 'API key copied to clipboard!', variant: 'success' });
     }
   };
 

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'preact/hooks';
 import { Modal, Button, Alert } from '../shared';
 import { ApiClient } from '../../lib/api';
 import { generateUUID } from '../../lib/utils';
+import { useNotification } from '../../contexts/NotificationContext';
 
 interface Column {
   name: string;
@@ -20,6 +21,7 @@ interface AddRowModalProps {
 }
 
 export function AddRowModal({ isOpen, onClose, apiClient, tableName, onSuccess }: AddRowModalProps) {
+  const { showToast } = useNotification();
   const [schema, setSchema] = useState<Column[]>([]);
   const [formData, setFormData] = useState<Record<string, any>>({});
   const [loading, setLoading] = useState(false);
@@ -113,7 +115,7 @@ export function AddRowModal({ isOpen, onClose, apiClient, tableName, onSuccess }
 
       const result = await apiClient.insertRow(tableName, submitData);
       if (result.success) {
-        alert('Row added successfully!');
+        showToast({ message: 'Row added successfully!', variant: 'success' });
         onSuccess();
         handleClose();
       } else {
