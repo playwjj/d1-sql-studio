@@ -307,7 +307,29 @@ GET /api/tables/:tableName/schema
 
 ### Get Table Data
 ```bash
-GET /api/tables/:tableName/rows?page=1&limit=50
+GET /api/tables/:tableName/rows?page=1&limit=50&sortBy=id&sortOrder=asc&search=keyword
+```
+
+**Query Parameters:**
+- `page` (optional): Page number (default: 1)
+- `limit` (optional): Rows per page (default: 50)
+- `sortBy` (optional): Column name to sort by
+- `sortOrder` (optional): Sort direction - `asc` or `desc` (default: asc)
+- `search` (optional): Search keyword (searches in all TEXT columns)
+
+**Examples:**
+```bash
+# Basic pagination
+GET /api/tables/users/rows?page=1&limit=50
+
+# Sort by ID descending
+GET /api/tables/users/rows?sortBy=id&sortOrder=desc
+
+# Sort by name ascending
+GET /api/tables/users/rows?sortBy=name&sortOrder=asc
+
+# Search for "john" and sort by created_at
+GET /api/tables/users/rows?search=john&sortBy=created_at&sortOrder=desc
 ```
 
 ### Execute SQL Query

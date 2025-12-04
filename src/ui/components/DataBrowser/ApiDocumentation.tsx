@@ -63,11 +63,11 @@ export function ApiDocumentation({ tableName, apiUrl, apiKey, apiClient }: ApiDo
   const examples = [
     {
       id: 'list',
-      title: 'Get Table Data (Paginated)',
+      title: 'Get Table Data (Paginated, Sortable, Searchable)',
       method: 'GET',
-      curl: `curl -X GET "${baseUrl}/api/tables/${tableName}/rows?page=1&limit=50" \\
+      curl: `curl -X GET "${baseUrl}/api/tables/${tableName}/rows?page=1&limit=50&sortBy=id&sortOrder=desc&search=keyword" \\
   -H "Authorization: Bearer ${apiKey}"`,
-      description: 'Fetch paginated rows from the table',
+      description: 'Fetch rows with pagination, sorting, and search. Optional params: sortBy (column name), sortOrder (asc/desc), search (keyword)',
       response: `{
   "success": true,
   "data": [ /* array of rows */ ],
