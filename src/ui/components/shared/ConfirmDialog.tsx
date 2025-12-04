@@ -1,4 +1,3 @@
-import { h } from 'preact';
 import { Button } from './Button';
 
 interface ConfirmDialogProps {

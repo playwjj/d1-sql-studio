@@ -1,4 +1,4 @@
-import { h, createContext, ComponentChildren } from 'preact';
+import { createContext, ComponentChildren } from 'preact';
 import { useState, useContext, useCallback } from 'preact/hooks';
 import { Toast } from '../components/shared/Toast';
 import { ConfirmDialog } from '../components/shared/ConfirmDialog';
