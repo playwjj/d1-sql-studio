@@ -157,47 +157,27 @@ export function ApiKeyManagement({ apiClient }: ApiKeyManagementProps) {
         >
           <h4 style="margin-bottom: 12px;">Create New API Key</h4>
           <form onSubmit={handleCreateKey}>
-            <div className="form-group" style="margin-bottom: 12px;">
+            <div className="form-group">
               <label>Key Name</label>
               <input
                 type="text"
+                className="form-control"
                 value={newKeyName}
                 onInput={(e) => setNewKeyName((e.target as HTMLInputElement).value)}
                 placeholder="e.g., Production Key"
                 required
                 disabled={creatingKey}
-                style={{
-                  width: '100%',
-                  padding: '8px 12px',
-                  border: '1px solid var(--border-color)',
-                  borderRadius: '6px',
-                  background: 'var(--input-bg)',
-                  color: 'var(--text-primary)',
-                  fontFamily: 'inherit',
-                  fontSize: '14px'
-                }}
               />
             </div>
-            <div className="form-group" style="margin-bottom: 12px;">
+            <div className="form-group">
               <label>Description (Optional)</label>
               <textarea
+                className="form-control"
                 value={newKeyDescription}
                 onInput={(e) => setNewKeyDescription((e.target as HTMLTextAreaElement).value)}
                 placeholder="e.g., Used for production environment, full permissions, created in Jan 2025"
                 disabled={creatingKey}
                 rows={3}
-                style={{
-                  width: '100%',
-                  padding: '8px 12px',
-                  border: '2px solid var(--border-color)',
-                  borderRadius: '6px',
-                  background: 'var(--input-bg)',
-                  color: 'var(--text-primary)',
-                  fontFamily: 'inherit',
-                  fontSize: '14px',
-                  resize: 'vertical',
-                  boxSizing: 'border-box'
-                }}
               />
             </div>
             <Button variant="primary" type="submit" disabled={creatingKey}>
