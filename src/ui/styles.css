@@ -1258,6 +1258,73 @@ pre code {
   line-height: 1.6;
 }
 
+/* Export Dropdown */
+.export-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: var(--shadow-lg);
+  min-width: 280px;
+  z-index: 100;
+  overflow: hidden;
+  animation: slideDown 0.2s ease-out;
+}
+
+.export-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  width: 100%;
+  border: none;
+  background: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: left;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.export-dropdown-item:last-child {
+  border-bottom: none;
+}
+
+.export-dropdown-item:hover {
+  background: var(--hover-bg);
+}
+
+.export-dropdown-item:active {
+  background: var(--bg-secondary);
+}
+
+.export-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  background: linear-gradient(135deg, var(--primary-light), var(--primary));
+  border-radius: 8px;
+  font-size: 18px;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.2);
+}
+
+.export-title {
+  color: var(--text);
+  font-weight: 600;
+  font-size: 14px;
+  margin-bottom: 2px;
+}
+
+.export-desc {
+  color: var(--text-light);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .dashboard {

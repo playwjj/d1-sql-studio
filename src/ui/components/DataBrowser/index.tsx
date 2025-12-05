@@ -1,10 +1,11 @@
-import { useState, useEffect } from 'preact/hooks';
+import { useState, useEffect, useRef } from 'preact/hooks';
 import { ApiClient } from '../../lib/api';
 import { Button, Alert } from '../shared';
 import { AddRowModal } from './AddRowModal';
 import { EditRowModal } from './EditRowModal';
 import { ApiDocumentation } from './ApiDocumentation';
 import { useNotification } from '../../contexts/NotificationContext';
+import { exportToCSV, exportToJSON, copySQLInserts } from '../../lib/exportUtils';
 
 interface DataBrowserProps {
   apiClient: ApiClient;
@@ -27,11 +28,30 @@ export function DataBrowser({ apiClient, tableName, apiKey }: DataBrowserProps) 
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [search, setSearch] = useState('');
   const [searchInput, setSearchInput] = useState('');
+  const [showExportMenu, setShowExportMenu] = useState(false);
+  const exportMenuRef = useRef<HTMLDivElement>(null);
   const limit = 50;
 
   useEffect(() => {
     loadData();
   }, [tableName, page, sortBy, sortOrder, search]);
+
+  // Close export menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (exportMenuRef.current && !exportMenuRef.current.contains(event.target as Node)) {
+        setShowExportMenu(false);
+      }
+    };
+
+    if (showExportMenu) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showExportMenu]);
 
   useEffect(() => {
     // Reset page when search or sort changes
@@ -134,6 +154,36 @@ export function DataBrowser({ apiClient, tableName, apiKey }: DataBrowserProps) 
     setSearch('');
   };
 
+  const handleExportCSV = () => {
+    try {
+      exportToCSV(data, `${tableName}_export.csv`);
+      showToast({ message: 'Data exported to CSV successfully', variant: 'success' });
+      setShowExportMenu(false);
+    } catch (err: any) {
+      showToast({ message: err.message || 'Failed to export CSV', variant: 'danger' });
+    }
+  };
+
+  const handleExportJSON = () => {
+    try {
+      exportToJSON(data, `${tableName}_export.json`);
+      showToast({ message: 'Data exported to JSON successfully', variant: 'success' });
+      setShowExportMenu(false);
+    } catch (err: any) {
+      showToast({ message: err.message || 'Failed to export JSON', variant: 'danger' });
+    }
+  };
+
+  const handleCopySQLInserts = async () => {
+    try {
+      await copySQLInserts(data, tableName);
+      showToast({ message: 'SQL INSERT statements copied to clipboard', variant: 'success' });
+      setShowExportMenu(false);
+    } catch (err: any) {
+      showToast({ message: err.message || 'Failed to copy SQL', variant: 'danger' });
+    }
+  };
+
   if (loading) {
     return (
       <div className="loading">
@@ -163,7 +213,41 @@ export function DataBrowser({ apiClient, tableName, apiKey }: DataBrowserProps) 
     <div>
       <div className="card-header">
         <h3>{tableName} ({total} rows)</h3>
-        <div>
+        <div style="display: flex; gap: 10px; position: relative;">
+          <div ref={exportMenuRef} style="position: relative;">
+            <Button
+              variant="primary"
+              className="btn-sm"
+              onClick={() => setShowExportMenu(!showExportMenu)}
+            >
+              📥 Export
+            </Button>
+            {showExportMenu && (
+              <div className="export-dropdown">
+                <button className="export-dropdown-item" onClick={handleExportCSV}>
+                  <span className="export-icon">📄</span>
+                  <div>
+                    <div className="export-title">Export as CSV</div>
+                    <div className="export-desc">Download data in CSV format</div>
+                  </div>
+                </button>
+                <button className="export-dropdown-item" onClick={handleExportJSON}>
+                  <span className="export-icon">📋</span>
+                  <div>
+                    <div className="export-title">Export as JSON</div>
+                    <div className="export-desc">Download data in JSON format</div>
+                  </div>
+                </button>
+                <button className="export-dropdown-item" onClick={handleCopySQLInserts}>
+                  <span className="export-icon">💾</span>
+                  <div>
+                    <div className="export-title">Copy as SQL INSERT</div>
+                    <div className="export-desc">Copy INSERT statements to clipboard</div>
+                  </div>
+                </button>
+              </div>
+            )}
+          </div>
           <Button variant="success" className="btn-sm" onClick={() => setShowAddModal(true)}>
             ➕ Add Row
           </Button>
