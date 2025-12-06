@@ -164,18 +164,34 @@ export class Router {
       return this.jsonResponse({ success: false, error: 'Only CREATE TABLE statements are allowed' }, 400);
     }
 
-    // Check for dangerous keywords that shouldn't be in CREATE TABLE
-    const dangerousInCreateTable = ['DROP', 'DELETE', 'INSERT', 'UPDATE', 'EXEC', 'EXECUTE', 'ALTER'];
-    for (const keyword of dangerousInCreateTable) {
-      if (trimmed.includes(keyword)) {
-        return this.jsonResponse({ success: false, error: `CREATE TABLE statement cannot contain keyword: ${keyword}` }, 400);
-      }
-    }
-
-    // Check for multiple statements
+    // Check for multiple statements (semicolons outside of quoted strings)
     const statements = body.sql.split(';').filter(s => s.trim());
     if (statements.length > 1) {
       return this.jsonResponse({ success: false, error: 'Multiple SQL statements not allowed' }, 400);
+    }
+
+    // Remove quoted identifiers and string literals to check for dangerous patterns
+    // This allows keywords like "update", "delete" when used as properly quoted column names
+    const sqlWithoutQuotedContent = body.sql
+      .replace(/"[^"]*"/g, '""')  // Remove double-quoted identifiers
+      .replace(/'[^']*'/g, "''")  // Remove single-quoted string literals
+      .replace(/`[^`]*`/g, '``')  // Remove backtick-quoted identifiers
+      .toUpperCase();
+
+    // Check for dangerous keywords that shouldn't appear outside of quoted identifiers
+    // These indicate actual SQL operations, not column names
+    const dangerousInCreateTable = ['DROP', 'DELETE', 'INSERT', 'UPDATE', 'EXEC', 'EXECUTE', 'ALTER', 'ATTACH', 'DETACH'];
+    for (const keyword of dangerousInCreateTable) {
+      // Use word boundary regex to match whole words only
+      const keywordPattern = new RegExp(`\\b${keyword}\\b`);
+      if (keywordPattern.test(sqlWithoutQuotedContent)) {
+        return this.jsonResponse({ success: false, error: `CREATE TABLE statement cannot contain SQL command: ${keyword}` }, 400);
+      }
+    }
+
+    // Check for SQL injection patterns
+    if (/--/.test(body.sql) || /\/\*/.test(body.sql)) {
+      return this.jsonResponse({ success: false, error: 'SQL comments are not allowed in CREATE TABLE statements' }, 400);
     }
 
     const result = await this.dbManager.createTable(body.sql);

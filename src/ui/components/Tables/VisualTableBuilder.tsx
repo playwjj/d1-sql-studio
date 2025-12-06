@@ -116,6 +116,12 @@ export function VisualTableBuilder({ isOpen, onClose, onSuccess, apiClient }: Vi
     );
   };
 
+  const quoteIdentifier = (identifier: string): string => {
+    // SQLite uses double quotes for identifiers (table names, column names)
+    // Escape any existing double quotes by doubling them
+    return `"${identifier.replace(/"/g, '""')}"`;
+  };
+
   const generateSQL = (): string => {
     if (!tableName.trim()) return '-- Enter table name';
     if (fields.length === 0) return '-- Add at least one field';
@@ -123,7 +129,8 @@ export function VisualTableBuilder({ isOpen, onClose, onSuccess, apiClient }: Vi
 
     const primaryKeys = fields.filter((f) => f.isPrimaryKey);
     const fieldDefinitions = fields.map((f) => {
-      let def = `  ${f.name} `;
+      // Quote field name to handle SQL reserved keywords
+      let def = `  ${quoteIdentifier(f.name)} `;
 
       // Map special types to SQLite types
       const typeMap: Record<string, string> = {
@@ -160,11 +167,12 @@ export function VisualTableBuilder({ isOpen, onClose, onSuccess, apiClient }: Vi
       return def;
     });
 
-    let sql = `CREATE TABLE ${tableName} (\n${fieldDefinitions.join(',\n')}`;
+    // Quote table name to handle SQL reserved keywords
+    let sql = `CREATE TABLE ${quoteIdentifier(tableName)} (\n${fieldDefinitions.join(',\n')}`;
 
     // Composite primary key or non-auto-increment single PK
     if (primaryKeys.length > 1 || (primaryKeys.length === 1 && (!primaryKeys[0].autoIncrement || primaryKeys[0].type !== 'INTEGER'))) {
-      const pkFields = primaryKeys.map((f) => f.name).join(', ');
+      const pkFields = primaryKeys.map((f) => quoteIdentifier(f.name)).join(', ');
       sql += `,\n  PRIMARY KEY (${pkFields})`;
     }
 

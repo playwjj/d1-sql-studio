@@ -77,17 +77,21 @@ export function CreateTableModal({ isOpen, onClose, apiClient, onSuccess }: Crea
           error={errors.sql}
           touched={touched.sql}
           required
-          hint="Enter a CREATE TABLE statement. Example: CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT);"
+          hint='Enter a CREATE TABLE statement. Use double quotes for SQL keywords: "update", "delete", "order", etc.'
         >
           <textarea
             className={`form-control ${errors.sql && touched.sql ? 'error' : ''}`}
-            placeholder="CREATE TABLE users (&#10;  id INTEGER PRIMARY KEY AUTOINCREMENT,&#10;  name TEXT NOT NULL,&#10;  email TEXT UNIQUE&#10;);"
+            placeholder="CREATE TABLE users (&#10;  id INTEGER PRIMARY KEY AUTOINCREMENT,&#10;  name TEXT NOT NULL,&#10;  email TEXT UNIQUE,&#10;  &quot;update&quot; TEXT,&#10;  &quot;order&quot; INTEGER&#10;);"
             value={sql}
             onInput={(e) => setSql((e.target as HTMLTextAreaElement).value)}
             onBlur={() => handleBlur('sql', sql)}
             rows={12}
           />
         </FormField>
+
+        <Alert variant="info">
+          <strong>💡 提示：</strong>如果字段名或表名是 SQL 关键字（如 update, delete, order, select 等），请使用双引号包裹，例如：<code>"update"</code>, <code>"delete"</code>
+        </Alert>
 
         <div className="modal-footer">
           <Button type="button" onClick={handleClose} variant="secondary" disabled={loading}>

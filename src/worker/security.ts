@@ -9,9 +9,12 @@
 const IDENTIFIER_PATTERN = /^[a-zA-Z_][a-zA-Z0-9_]*$/;
 
 /**
- * SQL keywords that should not be allowed as identifiers (case-insensitive)
+ * SQL keywords that are reserved
+ * NOTE: We allow these as identifiers because we always use quoteIdentifier()
+ * to wrap them in double quotes, which makes them safe in SQLite.
+ * This list is kept for reference but not used in validation.
  */
-const SQL_KEYWORDS = new Set([
+const SQL_KEYWORDS_REFERENCE = new Set([
   'SELECT', 'INSERT', 'UPDATE', 'DELETE', 'DROP', 'CREATE', 'ALTER', 'TRUNCATE',
   'UNION', 'JOIN', 'WHERE', 'FROM', 'EXEC', 'EXECUTE', 'DECLARE', 'SCRIPT',
   'TABLE', 'DATABASE', 'INDEX', 'VIEW', 'TRIGGER', 'PROCEDURE', 'FUNCTION',
@@ -49,6 +52,10 @@ const ALLOWED_SQL_STATEMENTS = ['SELECT', 'PRAGMA', 'INSERT', 'UPDATE', 'DELETE'
  * Validates a SQL identifier (table name, column name, etc.)
  * Prevents SQL injection by ensuring only safe characters
  *
+ * NOTE: We allow SQL keywords (like 'update', 'delete', 'order', etc.) as identifiers
+ * because we always wrap them in double quotes using quoteIdentifier().
+ * SQLite supports quoted identifiers, making keywords safe to use as column/table names.
+ *
  * @param identifier - The identifier to validate
  * @param type - Type of identifier for error messages
  * @throws Error if identifier is invalid
@@ -63,17 +70,15 @@ export function validateIdentifier(identifier: string, type: string = 'identifie
     throw new Error(`Invalid ${type}: exceeds maximum length of 128 characters`);
   }
 
-  // Check pattern
+  // Check pattern - only letters, numbers, and underscores
   if (!IDENTIFIER_PATTERN.test(identifier)) {
     throw new Error(`Invalid ${type}: must contain only letters, numbers, and underscores, and start with a letter or underscore`);
   }
 
-  // Check for SQL keywords
-  if (SQL_KEYWORDS.has(identifier.toUpperCase())) {
-    throw new Error(`Invalid ${type}: cannot use SQL keyword '${identifier}'`);
-  }
+  // SQL keywords are now ALLOWED because we use quoteIdentifier() everywhere
+  // This means 'update', 'delete', 'order', 'group', etc. are valid column names
 
-  // Check for dangerous patterns
+  // Check for dangerous patterns (injection attempts)
   for (const pattern of DANGEROUS_PATTERNS) {
     if (pattern.test(identifier)) {
       throw new Error(`Invalid ${type}: contains potentially dangerous characters`);
