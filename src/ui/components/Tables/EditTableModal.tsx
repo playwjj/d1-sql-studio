@@ -380,6 +380,7 @@ export function EditTableModal({ isOpen, onClose, apiClient, tableName, onSucces
       <FormField
         label="Constraints (Optional)"
         name="newColumnConstraints"
+        hint="Add column constraints like NOT NULL, UNIQUE, DEFAULT, CHECK, etc."
       >
         <input
           type="text"
@@ -387,9 +388,24 @@ export function EditTableModal({ isOpen, onClose, apiClient, tableName, onSucces
           className="form-control"
           value={newColumnConstraints}
           onInput={(e) => setNewColumnConstraints((e.target as HTMLInputElement).value)}
-          placeholder="e.g. NOT NULL, DEFAULT 'value'"
+          placeholder="e.g. NOT NULL DEFAULT 'default_value'"
         />
       </FormField>
+
+      <div style="margin-bottom: 20px;">
+        <div style="font-size: 12px; color: #666; background: #f8f9fa; padding: 12px; border-radius: 4px; border-left: 3px solid #0066cc;">
+          <strong>常用约束：</strong>
+          <ul style="margin: 8px 0 0 0; padding-left: 20px;">
+            <li><code>NOT NULL</code> - 不允许空值</li>
+            <li><code>UNIQUE</code> - 值必须唯一</li>
+            <li><code>DEFAULT value</code> - 设置默认值（文本需要加引号，如 <code>DEFAULT 'active'</code>）</li>
+            <li><code>CHECK (condition)</code> - 检查约束（如 <code>CHECK (age &gt;= 0)</code>）</li>
+          </ul>
+          <div style="margin-top: 8px; font-style: italic;">
+            示例：<code>NOT NULL DEFAULT 0</code> 或 <code>UNIQUE CHECK (price &gt; 0)</code>
+          </div>
+        </div>
+      </div>
 
       <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">
         <Button onClick={() => setMode('main')} variant="secondary" disabled={loading}>
