@@ -79,6 +79,21 @@ export function ApiDocumentation({ tableName, apiUrl, apiKey, apiClient }: ApiDo
 }`
     },
     {
+      id: 'get-row',
+      title: 'Get Single Row by ID',
+      method: 'GET',
+      curl: `curl -X GET "${baseUrl}/api/tables/${tableName}/rows/1" \\
+  -H "Authorization: Bearer ${apiKey}"`,
+      description: 'Fetch a single row by its ID',
+      response: `{
+  "success": true,
+  "data": {
+    "id": 1,
+    /* row data */
+  }
+}`
+    },
+    {
       id: 'schema',
       title: 'Get Table Schema',
       method: 'GET',
