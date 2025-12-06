@@ -394,15 +394,15 @@ export function EditTableModal({ isOpen, onClose, apiClient, tableName, onSucces
 
       <div style="margin-bottom: 20px;">
         <div style="font-size: 12px; color: #666; background: #f8f9fa; padding: 12px; border-radius: 4px; border-left: 3px solid #0066cc;">
-          <strong>常用约束：</strong>
+          <strong>Common Constraints:</strong>
           <ul style="margin: 8px 0 0 0; padding-left: 20px;">
-            <li><code>NOT NULL</code> - 不允许空值</li>
-            <li><code>UNIQUE</code> - 值必须唯一</li>
-            <li><code>DEFAULT value</code> - 设置默认值（文本需要加引号，如 <code>DEFAULT 'active'</code>）</li>
-            <li><code>CHECK (condition)</code> - 检查约束（如 <code>CHECK (age &gt;= 0)</code>）</li>
+            <li><code>NOT NULL</code> - Does not allow NULL values</li>
+            <li><code>UNIQUE</code> - Value must be unique</li>
+            <li><code>DEFAULT value</code> - Set default value (text values need quotes, e.g. <code>DEFAULT 'active'</code>)</li>
+            <li><code>CHECK (condition)</code> - Check constraint (e.g. <code>CHECK (age &gt;= 0)</code>)</li>
           </ul>
           <div style="margin-top: 8px; font-style: italic;">
-            示例：<code>NOT NULL DEFAULT 0</code> 或 <code>UNIQUE CHECK (price &gt; 0)</code>
+            Examples: <code>NOT NULL DEFAULT 0</code> or <code>UNIQUE CHECK (price &gt; 0)</code>
           </div>
         </div>
       </div>
