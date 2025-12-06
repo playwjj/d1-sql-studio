@@ -63,6 +63,15 @@ export class Router {
 
       if (method === 'GET' && path.match(/^\/api\/tables\/[^/]+\/rows$/)) {
         const tableName = path.split('/')[3];
+        const field = url.searchParams.get('field');
+        const value = url.searchParams.get('value');
+
+        // If field and value are provided, query by custom field
+        if (field && value) {
+          return await this.getRowByField(tableName, field, value);
+        }
+
+        // Otherwise, return paginated list
         const page = parseInt(url.searchParams.get('page') || '1');
         const limit = parseInt(url.searchParams.get('limit') || '50');
         const sortBy = url.searchParams.get('sortBy') || undefined;
@@ -225,6 +234,14 @@ export class Router {
 
   private async getRow(tableName: string, id: string): Promise<Response> {
     const row = await this.dbManager.getRow(tableName, id);
+    return this.jsonResponse({ success: true, data: row });
+  }
+
+  private async getRowByField(tableName: string, field: string, value: string): Promise<Response> {
+    const row = await this.dbManager.getRowByField(tableName, field, value);
+    if (!row) {
+      return this.jsonResponse({ success: false, error: 'Row not found' }, 404);
+    }
     return this.jsonResponse({ success: true, data: row });
   }
 

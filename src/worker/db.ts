@@ -131,6 +131,28 @@ export class D1Manager {
       .first();
   }
 
+  async getRowByField(tableName: string, fieldName: string, value: string | number) {
+    // Validate table name and field name to prevent SQL injection
+    validateIdentifier(tableName, 'table name');
+    validateIdentifier(fieldName, 'field name');
+
+    // Verify field exists in table schema
+    const schema = await this.getTableSchema(tableName);
+    const field = schema.find(col => col.name === fieldName);
+
+    if (!field) {
+      throw new Error(`Field '${fieldName}' does not exist in table '${tableName}'`);
+    }
+
+    const quotedTable = quoteIdentifier(tableName);
+    const quotedField = quoteIdentifier(fieldName);
+
+    return await this.db
+      .prepare(`SELECT * FROM ${quotedTable} WHERE ${quotedField} = ? LIMIT 1`)
+      .bind(value)
+      .first();
+  }
+
   async insertRow(tableName: string, data: Record<string, any>) {
     // Validate table name to prevent SQL injection
     validateIdentifier(tableName, 'table name');

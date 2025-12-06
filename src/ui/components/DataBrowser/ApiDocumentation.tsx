@@ -94,6 +94,22 @@ export function ApiDocumentation({ tableName, apiUrl, apiKey, apiClient }: ApiDo
 }`
     },
     {
+      id: 'get-row-by-field',
+      title: 'Get Single Row by Custom Field',
+      method: 'GET',
+      curl: `curl -X GET "${baseUrl}/api/tables/${tableName}/rows?field=slug&value=my-post-slug" \\
+  -H "Authorization: Bearer ${apiKey}"`,
+      description: 'Fetch a single row by any field (e.g., slug, email, username)',
+      response: `{
+  "success": true,
+  "data": {
+    "id": 1,
+    "slug": "my-post-slug",
+    /* row data */
+  }
+}`
+    },
+    {
       id: 'schema',
       title: 'Get Table Schema',
       method: 'GET',
