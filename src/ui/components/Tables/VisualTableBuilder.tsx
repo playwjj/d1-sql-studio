@@ -28,8 +28,10 @@ const FIELD_TYPES = [
   { value: 'TEXT', label: 'TEXT', description: 'String/text data' },
   { value: 'REAL', label: 'REAL', description: 'Decimal numbers' },
   { value: 'BLOB', label: 'BLOB', description: 'Binary data' },
+  { value: 'NUMERIC', label: 'NUMERIC', description: 'Numeric data (flexible storage)' },
   { value: 'UUID', label: 'UUID', description: 'Unique identifier (stored as TEXT)' },
   { value: 'DATETIME', label: 'DATETIME', description: 'Date and time (stored as TEXT)' },
+  { value: 'TIMESTAMP', label: 'TIMESTAMP', description: 'Unix timestamp (stored as TEXT)' },
   { value: 'DATE', label: 'DATE', description: 'Date only (stored as TEXT)' },
   { value: 'TIME', label: 'TIME', description: 'Time only (stored as TEXT)' },
   { value: 'BOOLEAN', label: 'BOOLEAN', description: 'True/false (stored as INTEGER)' },
@@ -136,6 +138,7 @@ export function VisualTableBuilder({ isOpen, onClose, onSuccess, apiClient }: Vi
       const typeMap: Record<string, string> = {
         UUID: 'TEXT',
         DATETIME: 'TEXT',
+        TIMESTAMP: 'TEXT',
         DATE: 'TEXT',
         TIME: 'TEXT',
         BOOLEAN: 'INTEGER',
@@ -158,8 +161,8 @@ export function VisualTableBuilder({ isOpen, onClose, onSuccess, apiClient }: Vi
       }
 
       if (f.defaultValue.trim()) {
-        // Smart quote handling
-        const needsQuotes = ['TEXT', 'UUID', 'DATETIME', 'DATE', 'TIME', 'JSON'].includes(f.type);
+        // Smart quote handling for default values
+        const needsQuotes = ['TEXT', 'UUID', 'DATETIME', 'TIMESTAMP', 'DATE', 'TIME', 'JSON'].includes(f.type);
         const value = needsQuotes ? `'${f.defaultValue}'` : f.defaultValue;
         def += ` DEFAULT ${value}`;
       }

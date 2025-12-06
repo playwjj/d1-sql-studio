@@ -103,10 +103,22 @@ export function EditTableModal({ isOpen, onClose, apiClient, tableName, onSucces
     setLoading(true);
     setFormErrors({});
     try {
+      // Map extended types to SQLite base types
+      const typeMap: Record<string, string> = {
+        UUID: 'TEXT',
+        DATETIME: 'TEXT',
+        TIMESTAMP: 'TEXT',
+        DATE: 'TEXT',
+        TIME: 'TEXT',
+        BOOLEAN: 'INTEGER',
+        JSON: 'TEXT',
+      };
+      const mappedType = typeMap[newColumnType.toUpperCase()] || newColumnType;
+
       const result = await apiClient.addColumn(
         tableName,
         newColumnName.trim(),
-        newColumnType.trim(),
+        mappedType.trim(),
         newColumnConstraints.trim() || undefined
       );
 
@@ -346,11 +358,22 @@ export function EditTableModal({ isOpen, onClose, apiClient, tableName, onSucces
           value={newColumnType}
           onChange={(e) => setNewColumnType((e.target as HTMLSelectElement).value)}
         >
-          <option value="TEXT">TEXT</option>
-          <option value="INTEGER">INTEGER</option>
-          <option value="REAL">REAL</option>
-          <option value="BLOB">BLOB</option>
-          <option value="NUMERIC">NUMERIC</option>
+          <optgroup label="Basic Types">
+            <option value="INTEGER">INTEGER - Whole numbers</option>
+            <option value="TEXT">TEXT - String/text data</option>
+            <option value="REAL">REAL - Decimal numbers</option>
+            <option value="BLOB">BLOB - Binary data</option>
+            <option value="NUMERIC">NUMERIC - Flexible numeric</option>
+          </optgroup>
+          <optgroup label="Extended Types">
+            <option value="UUID">UUID - Unique identifier</option>
+            <option value="DATETIME">DATETIME - Date and time</option>
+            <option value="TIMESTAMP">TIMESTAMP - Unix timestamp</option>
+            <option value="DATE">DATE - Date only</option>
+            <option value="TIME">TIME - Time only</option>
+            <option value="BOOLEAN">BOOLEAN - True/false</option>
+            <option value="JSON">JSON - JSON data</option>
+          </optgroup>
         </select>
       </FormField>
 
