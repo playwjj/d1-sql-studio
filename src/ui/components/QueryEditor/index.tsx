@@ -1,8 +1,14 @@
-import { useState, useRef } from 'preact/hooks';
+import { useState, useRef, useEffect } from 'preact/hooks';
 import { ApiClient } from '../../lib/api';
 import { Button, Alert } from '../shared';
 import { exportToCSV, exportToJSON, copySQLInserts } from '../../lib/exportUtils';
 import { useNotification } from '../../contexts/NotificationContext';
+import { QueryHistoryManager } from '../../lib/queryHistory';
+import { SqlEditor } from './SqlEditor';
+import { ResultsTable } from './ResultsTable';
+import { QueryHistory } from './QueryHistory';
+import { KeyboardShortcuts } from './KeyboardShortcuts';
+import { format } from 'sql-formatter';
 
 interface QueryEditorProps {
   apiClient: ApiClient;
@@ -15,7 +21,27 @@ export function QueryEditor({ apiClient }: QueryEditorProps) {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [showExportMenu, setShowExportMenu] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
+  const [showShortcuts, setShowShortcuts] = useState(false);
+  const [tables, setTables] = useState<string[]>([]);
   const exportMenuRef = useRef<HTMLDivElement>(null);
+
+  // Load tables for autocomplete
+  useEffect(() => {
+    loadTables();
+  }, []);
+
+  const loadTables = async () => {
+    try {
+      const response = await apiClient.listTables();
+      if (response.success && response.data && Array.isArray(response.data)) {
+        const tableNames = response.data.map((table: any) => table.name);
+        setTables(tableNames);
+      }
+    } catch (err) {
+      console.error('Failed to load tables:', err);
+    }
+  };
 
   const executeQuery = async () => {
     if (!sql.trim()) {
@@ -27,24 +53,63 @@ export function QueryEditor({ apiClient }: QueryEditorProps) {
     setLoading(true);
     setResult(null);
 
+    const startTime = performance.now();
+
     try {
       const response = await apiClient.executeQuery(sql);
+      const duration = `${(performance.now() - startTime).toFixed(2)}ms`;
+
       if (response.success) {
         setResult(response.data);
+
+        // Save to history
+        QueryHistoryManager.saveQuery(
+          sql,
+          true,
+          (response.data as any)?.results?.length || 0,
+          duration
+        );
+
+        showToast({
+          message: `Query executed successfully in ${duration}`,
+          variant: 'success'
+        });
       } else {
         throw new Error(response.error);
       }
     } catch (err: any) {
-      setError(err.message || 'Failed to execute query');
+      const errorMsg = err.message || 'Failed to execute query';
+      setError(errorMsg);
+
+      // Save failed query to history
+      QueryHistoryManager.saveQuery(sql, false, undefined, undefined, errorMsg);
+
+      showToast({
+        message: errorMsg,
+        variant: 'danger'
+      });
     } finally {
       setLoading(false);
     }
   };
 
-  const handleKeyDown = (e: KeyboardEvent) => {
-    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
-      e.preventDefault();
-      executeQuery();
+  const formatSQL = () => {
+    if (!sql.trim()) {
+      showToast({ message: 'No SQL to format', variant: 'warning' });
+      return;
+    }
+
+    try {
+      const formatted = format(sql, {
+        language: 'sqlite',
+        tabWidth: 2,
+        keywordCase: 'upper',
+        linesBetweenQueries: 2,
+      });
+      setSql(formatted);
+      showToast({ message: 'SQL formatted successfully', variant: 'success' });
+    } catch (err: any) {
+      showToast({ message: 'Failed to format SQL: ' + err.message, variant: 'danger' });
     }
   };
 
@@ -92,6 +157,30 @@ export function QueryEditor({ apiClient }: QueryEditorProps) {
     }
   };
 
+  // Handle keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Ctrl/Cmd + K - Format SQL
+      if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+        e.preventDefault();
+        formatSQL();
+      }
+      // Ctrl/Cmd + H - Show history
+      if ((e.ctrlKey || e.metaKey) && e.key === 'h') {
+        e.preventDefault();
+        setShowHistory(true);
+      }
+      // Ctrl/Cmd + ? - Show shortcuts
+      if ((e.ctrlKey || e.metaKey) && e.key === '?') {
+        e.preventDefault();
+        setShowShortcuts(true);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [sql]);
+
   return (
     <div>
       <Alert variant="info">
@@ -105,23 +194,47 @@ export function QueryEditor({ apiClient }: QueryEditorProps) {
       <div className="card">
         <div className="card-header">
           <h3>SQL Query Editor</h3>
-          <Button
-            onClick={executeQuery}
-            variant="primary"
-            disabled={loading}
-          >
-            {loading ? '⏳ Executing...' : '⚡ Execute (Ctrl+Enter)'}
-          </Button>
+          <div style="display: flex; gap: 10px;">
+            <Button
+              onClick={() => setShowShortcuts(true)}
+              variant="secondary"
+              className="btn-sm"
+              title="Keyboard Shortcuts"
+            >
+              ⌨️
+            </Button>
+            <Button
+              onClick={() => setShowHistory(true)}
+              variant="secondary"
+              className="btn-sm"
+              title="Query History (Ctrl+H)"
+            >
+              📜 History
+            </Button>
+            <Button
+              onClick={formatSQL}
+              variant="secondary"
+              className="btn-sm"
+              title="Format SQL (Ctrl+K)"
+            >
+              ✨ Format
+            </Button>
+            <Button
+              onClick={executeQuery}
+              variant="primary"
+              disabled={loading}
+            >
+              {loading ? '⏳ Executing...' : '⚡ Execute (Ctrl+Enter)'}
+            </Button>
+          </div>
         </div>
 
-        <div className="form-group">
-          <textarea
-            className="form-control"
-            placeholder="Enter your SQL query here...&#10;&#10;Examples:&#10;SELECT * FROM users LIMIT 10;&#10;UPDATE users SET name = 'John' WHERE id = 1;&#10;DELETE FROM users WHERE id = 5;"
+        <div className="form-group" style="margin: 0;">
+          <SqlEditor
             value={sql}
-            onInput={(e) => setSql((e.target as HTMLTextAreaElement).value)}
-            onKeyDown={handleKeyDown}
-            rows={10}
+            onChange={setSql}
+            onExecute={executeQuery}
+            tables={tables}
           />
         </div>
       </div>
@@ -182,32 +295,7 @@ export function QueryEditor({ apiClient }: QueryEditorProps) {
           </div>
 
           {result.results && result.results.length > 0 ? (
-            <div style="overflow-x: auto;">
-              <table className="data-table">
-                <thead>
-                  <tr>
-                    {Object.keys(result.results[0]).map(col => (
-                      <th key={col}>{col}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {result.results.map((row: any, idx: number) => (
-                    <tr key={idx}>
-                      {Object.values(row).map((val: any, i: number) => (
-                        <td key={i}>
-                          {val === null ? (
-                            <span style="color: var(--text-light); font-style: italic;">NULL</span>
-                          ) : (
-                            String(val)
-                          )}
-                        </td>
-                      ))}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <ResultsTable results={result.results} />
           ) : (
             <Alert variant="success">Query executed successfully!</Alert>
           )}
@@ -222,6 +310,17 @@ export function QueryEditor({ apiClient }: QueryEditorProps) {
             </div>
           )}
         </div>
+      )}
+
+      {showHistory && (
+        <QueryHistory
+          onSelectQuery={(query) => setSql(query)}
+          onClose={() => setShowHistory(false)}
+        />
+      )}
+
+      {showShortcuts && (
+        <KeyboardShortcuts onClose={() => setShowShortcuts(false)} />
       )}
     </div>
   );

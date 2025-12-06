@@ -7,6 +7,7 @@ interface ButtonProps {
   variant?: 'primary' | 'secondary' | 'success' | 'danger' | 'warning';
   disabled?: boolean;
   className?: string;
+  title?: string;
 }
 
 export function Button({
@@ -16,6 +17,7 @@ export function Button({
   variant = 'primary',
   disabled = false,
   className = '',
+  title,
 }: ButtonProps) {
   const variantClass = `btn-${variant}`;
 
@@ -25,6 +27,7 @@ export function Button({
       className={`btn ${variantClass} ${className}`}
       onClick={onClick}
       disabled={disabled}
+      title={title}
     >
       {children}
     </button>
