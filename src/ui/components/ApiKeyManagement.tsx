@@ -12,7 +12,6 @@ interface ApiKeyInfo {
   name: string;
   description?: string;
   createdAt: string;
-  lastUsedAt?: string;
 }
 
 interface ApiKeyData extends ApiKeyInfo {
@@ -276,7 +275,6 @@ export function ApiKeyManagement({ apiClient }: ApiKeyManagementProps) {
                 <th>Name</th>
                 <th>Description</th>
                 <th>Created</th>
-                <th>Last Used</th>
                 <th style="width: 100px;">Actions</th>
               </tr>
             </thead>
@@ -294,13 +292,6 @@ export function ApiKeyManagement({ apiClient }: ApiKeyManagementProps) {
                     )}
                   </td>
                   <td>{formatDate(key.createdAt)}</td>
-                  <td>
-                    {key.lastUsedAt ? (
-                      formatDate(key.lastUsedAt)
-                    ) : (
-                      <span style="color: var(--text-light); font-style: italic;">Never</span>
-                    )}
-                  </td>
                   <td>
                     <button
                       className="btn btn-danger btn-sm"
