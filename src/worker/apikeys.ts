@@ -9,18 +9,8 @@ interface CachedApiKey {
 const apiKeyCache = new Map<string, CachedApiKey>();
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
-// Cache cleanup - runs periodically to prevent memory bloat
-function cleanupCache() {
-  const now = Date.now();
-  for (const [key, value] of apiKeyCache.entries()) {
-    if (now - value.timestamp > CACHE_TTL) {
-      apiKeyCache.delete(key);
-    }
-  }
-}
-
-// Run cleanup every 10 minutes
-setInterval(cleanupCache, 10 * 60 * 1000);
+// Note: Cache cleanup is not needed in Workers - instances restart periodically
+// and stale entries are ignored during TTL check
 
 // Generate a random API key
 export function generateApiKey(): string {
