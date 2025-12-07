@@ -33,6 +33,10 @@ export function DataBrowser({ apiClient, tableName, apiKey }: DataBrowserProps) 
   const limit = 50;
 
   useEffect(() => {
+    loadTableSchema();
+  }, [tableName]);
+
+  useEffect(() => {
     loadData();
   }, [tableName, page, sortBy, sortOrder, search]);
 
@@ -59,6 +63,20 @@ export function DataBrowser({ apiClient, tableName, apiKey }: DataBrowserProps) 
       setPage(1);
     }
   }, [search, sortBy, sortOrder]);
+
+  const loadTableSchema = async () => {
+    try {
+      const result = await apiClient.getTableSchema(tableName);
+      if (result.success && result.data && Array.isArray(result.data)) {
+        const schemaColumns = result.data.map((col: any) => col.name);
+        if (schemaColumns.length > 0) {
+          setColumns(schemaColumns);
+        }
+      }
+    } catch (err: any) {
+      console.error('Failed to load table schema:', err);
+    }
+  };
 
   const loadData = async () => {
     setLoading(true);
@@ -199,10 +217,28 @@ export function DataBrowser({ apiClient, tableName, apiKey }: DataBrowserProps) 
 
   if (data.length === 0) {
     return (
-      <div className="empty-state">
-        <div className="empty-state-icon">📝</div>
-        <div className="empty-state-text">No Data</div>
-        <div className="empty-state-subtext">This table is empty</div>
+      <div>
+        <div className="card-header">
+          <h3>{tableName} (0 rows)</h3>
+          <div style="display: flex; gap: 10px;">
+            <Button variant="success" className="btn-sm" onClick={() => setShowAddModal(true)}>
+              ➕ Add Row
+            </Button>
+          </div>
+        </div>
+        <div className="empty-state">
+          <div className="empty-state-icon">📝</div>
+          <div className="empty-state-text">No Data</div>
+          <div className="empty-state-subtext">This table is empty. Click "Add Row" to add your first row.</div>
+        </div>
+
+        <AddRowModal
+          isOpen={showAddModal}
+          apiClient={apiClient}
+          tableName={tableName}
+          onClose={() => setShowAddModal(false)}
+          onSuccess={handleAddSuccess}
+        />
       </div>
     );
   }
