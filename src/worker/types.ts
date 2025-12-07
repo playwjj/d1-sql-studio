@@ -2,7 +2,7 @@ export interface Env {
   DB: D1Database;
   API_KEY?: string; // Optional: defaults to 'dev-api-key-change-in-production' if not set
   API_KEYS?: KVNamespace; // For storing multiple API keys
-  __STATIC_CONTENT: KVNamespace; // For Workers Sites
+  ASSETS: Fetcher; // For Workers Assets
 }
 
 export interface ApiResponse<T = any> {
@@ -40,5 +40,4 @@ export interface ApiKeyData {
   name: string;
   description?: string;
   createdAt: string;
-  lastUsedAt?: string;
 }

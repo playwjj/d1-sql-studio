@@ -1,11 +1,6 @@
 import { Env } from './types';
 import { authenticate, corsHeaders } from './auth';
 import { Router } from './router';
-import { getAssetFromKV } from '@cloudflare/kv-asset-handler';
-
-// @ts-ignore
-import manifestJSON from '__STATIC_CONTENT_MANIFEST';
-const assetManifest = JSON.parse(manifestJSON);
 
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
@@ -75,37 +70,8 @@ export default {
       }
     }
 
-    // Serve static assets
-    try {
-      return await getAssetFromKV(
-        {
-          request,
-          waitUntil: ctx.waitUntil.bind(ctx),
-        },
-        {
-          ASSET_NAMESPACE: env.__STATIC_CONTENT,
-          ASSET_MANIFEST: assetManifest,
-        }
-      );
-    } catch (e) {
-      // If asset not found, return index.html for client-side routing
-      if (e instanceof Error && e.message.includes('could not find')) {
-        try {
-          return await getAssetFromKV(
-            {
-              request: new Request(`${url.origin}/index.html`, request),
-              waitUntil: ctx.waitUntil.bind(ctx),
-            },
-            {
-              ASSET_NAMESPACE: env.__STATIC_CONTENT,
-              ASSET_MANIFEST: assetManifest,
-            }
-          );
-        } catch (e) {
-          return new Response('Not Found', { status: 404 });
-        }
-      }
-      return new Response('Internal Server Error', { status: 500 });
-    }
+    // Serve static assets using Workers Assets
+    // Assets automatically handles static files and client-side routing
+    return env.ASSETS.fetch(request);
   },
 };

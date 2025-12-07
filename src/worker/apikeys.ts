@@ -1,5 +1,27 @@
 import { Env, ApiKeyData } from './types';
 
+// API Key cache configuration
+interface CachedApiKey {
+  valid: boolean;
+  timestamp: number;
+}
+
+const apiKeyCache = new Map<string, CachedApiKey>();
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
+// Cache cleanup - runs periodically to prevent memory bloat
+function cleanupCache() {
+  const now = Date.now();
+  for (const [key, value] of apiKeyCache.entries()) {
+    if (now - value.timestamp > CACHE_TTL) {
+      apiKeyCache.delete(key);
+    }
+  }
+}
+
+// Run cleanup every 10 minutes
+setInterval(cleanupCache, 10 * 60 * 1000);
+
 // Generate a random API key
 export function generateApiKey(): string {
   const array = new Uint8Array(32);
@@ -38,27 +60,39 @@ export async function createApiKey(env: Env, name: string, description?: string)
   keysList.push(name);
   await env.API_KEYS.put('keys:list', JSON.stringify(keysList));
 
+  // Clear cache for new key (precautionary)
+  apiKeyCache.delete(key);
+
   return keyData;
 }
 
-// Validate an API key
+// Validate an API key with caching (read-only, no KV writes)
 export async function validateApiKey(env: Env, key: string): Promise<boolean> {
   if (!env.API_KEYS) {
     // Fallback to environment variable if KV not bound
     return key === (env.API_KEY || 'dev-api-key-change-in-production');
   }
 
-  const keyData = await env.API_KEYS.get(`key:${key}`);
-  if (!keyData) {
-    return false;
+  const now = Date.now();
+
+  // Check cache first
+  const cached = apiKeyCache.get(key);
+  if (cached && (now - cached.timestamp) < CACHE_TTL) {
+    // Cache hit - return immediately
+    return cached.valid;
   }
 
-  // Update last used timestamp
-  const data: ApiKeyData = JSON.parse(keyData);
-  data.lastUsedAt = new Date().toISOString();
-  await env.API_KEYS.put(`key:${key}`, JSON.stringify(data));
+  // Cache miss - fetch from KV
+  const keyData = await env.API_KEYS.get(`key:${key}`);
 
-  return true;
+  // Cache the result (both positive and negative)
+  const isValid = keyData !== null;
+  apiKeyCache.set(key, {
+    valid: isValid,
+    timestamp: now,
+  });
+
+  return isValid;
 }
 
 // Get all API keys (without exposing full key values)
@@ -80,7 +114,6 @@ export async function listApiKeys(env: Env): Promise<Omit<ApiKeyData, 'key'>[]> 
           name: data.name,
           description: data.description,
           createdAt: data.createdAt,
-          lastUsedAt: data.lastUsedAt,
         });
       }
     }
@@ -109,6 +142,9 @@ export async function deleteApiKey(env: Env, name: string): Promise<boolean> {
   const keysList = await getAllKeysList(env);
   const updatedList = keysList.filter(k => k !== name);
   await env.API_KEYS.put('keys:list', JSON.stringify(updatedList));
+
+  // Clear cache for deleted key
+  apiKeyCache.delete(keyValue);
 
   return true;
 }
