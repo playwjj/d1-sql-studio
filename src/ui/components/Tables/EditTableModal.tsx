@@ -3,6 +3,7 @@ import { ApiClient } from '../../lib/api';
 import { Modal, Button, Alert } from '../shared';
 import { useNotification } from '../../contexts/NotificationContext';
 import { FormField } from '../shared/FormField';
+import { copyToClipboard } from '../../lib/exportUtils';
 
 interface ColumnInfo {
   cid: number;
@@ -246,6 +247,40 @@ export function EditTableModal({ isOpen, onClose, apiClient, tableName, onSucces
     }
   };
 
+  const generateCreateTableSQL = (): string => {
+    if (columns.length === 0) {
+      throw new Error('No columns found');
+    }
+
+    const columnDefs = columns.map(col => {
+      let def = `  ${col.name} ${col.type}`;
+      
+      if (col.pk === 1) {
+        def += ' PRIMARY KEY';
+      }
+      if (col.notnull === 1) {
+        def += ' NOT NULL';
+      }
+      if (col.dflt_value !== null) {
+        def += ` DEFAULT ${col.dflt_value}`;
+      }
+      
+      return def;
+    }).join(',\n');
+
+    return `CREATE TABLE ${tableName} (\n${columnDefs}\n);`;
+  };
+
+  const handleCopyTableSchema = async () => {
+    try {
+      const sql = generateCreateTableSQL();
+      await copyToClipboard(sql);
+      showToast({ message: 'Table schema copied to clipboard!', variant: 'success' });
+    } catch (err: any) {
+      showToast({ message: `Error: ${err.message}`, variant: 'danger' });
+    }
+  };
+
   const renderMainView = () => (
     <div>
       {error && <Alert variant="danger">{error}</Alert>}
@@ -261,6 +296,9 @@ export function EditTableModal({ isOpen, onClose, apiClient, tableName, onSucces
           </Button>
           <Button onClick={() => setMode('renameTable')} variant="secondary">
             Rename Table
+          </Button>
+          <Button onClick={handleCopyTableSchema} variant="secondary">
+            📋 Copy Schema
           </Button>
         </div>
       </div>
