@@ -221,6 +221,9 @@ export function DataBrowser({ apiClient, tableName, apiKey }: DataBrowserProps) 
         <div className="card-header">
           <h3>{tableName} (0 rows)</h3>
           <div style="display: flex; gap: 10px;">
+            <Button variant="secondary" className="btn-sm" onClick={() => loadData()}>
+              🔄 Refresh
+            </Button>
             <Button variant="success" className="btn-sm" onClick={() => setShowAddModal(true)}>
               ➕ Add Row
             </Button>
@@ -250,6 +253,9 @@ export function DataBrowser({ apiClient, tableName, apiKey }: DataBrowserProps) 
       <div className="card-header">
         <h3>{tableName} ({total} rows)</h3>
         <div style="display: flex; gap: 10px; position: relative;">
+          <Button variant="secondary" className="btn-sm" onClick={() => loadData()}>
+            🔄 Refresh
+          </Button>
           <div ref={exportMenuRef} style="position: relative;">
             <Button
               variant="primary"
