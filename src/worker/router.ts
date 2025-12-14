@@ -181,11 +181,17 @@ export class Router {
 
     // Remove quoted identifiers and string literals to check for dangerous patterns
     // This allows keywords like "update", "delete" when used as properly quoted column names
-    const sqlWithoutQuotedContent = body.sql
+    let sqlWithoutQuotedContent = body.sql
       .replace(/"[^"]*"/g, '""')  // Remove double-quoted identifiers
       .replace(/'[^']*'/g, "''")  // Remove single-quoted string literals
       .replace(/`[^`]*`/g, '``')  // Remove backtick-quoted identifiers
       .toUpperCase();
+
+    // Remove foreign key constraint clauses (ON DELETE/UPDATE) before checking for dangerous keywords
+    // These are legitimate parts of FOREIGN KEY syntax, not dangerous SQL commands
+    sqlWithoutQuotedContent = sqlWithoutQuotedContent
+      .replace(/\bON\s+DELETE\s+(CASCADE|RESTRICT|SET\s+NULL|SET\s+DEFAULT|NO\s+ACTION)/g, '')
+      .replace(/\bON\s+UPDATE\s+(CASCADE|RESTRICT|SET\s+NULL|SET\s+DEFAULT|NO\s+ACTION)/g, '');
 
     // Check for dangerous keywords that shouldn't appear outside of quoted identifiers
     // These indicate actual SQL operations, not column names
