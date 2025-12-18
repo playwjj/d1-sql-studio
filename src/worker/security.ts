@@ -24,6 +24,8 @@ const SQL_KEYWORDS_REFERENCE = new Set([
 
 /**
  * Dangerous SQL patterns that indicate potential SQL injection
+ * Note: We don't check for SQL keywords here because they are safe when quoted.
+ * We only check for actual injection characters (quotes, comments, separators, etc.)
  */
 const DANGEROUS_PATTERNS = [
   /--/,           // SQL comments
@@ -34,11 +36,6 @@ const DANGEROUS_PATTERNS = [
   /"/,            // String delimiter
   /`/,            // Identifier delimiter
   /\\/,           // Escape character
-  /\bor\b/i,      // OR keyword
-  /\band\b/i,     // AND keyword
-  /\bunion\b/i,   // UNION keyword
-  /\bdrop\b/i,    // DROP keyword
-  /\bexec\b/i,    // EXEC keyword
 ];
 
 /**
