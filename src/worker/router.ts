@@ -2,6 +2,7 @@ import { Env, ApiResponse } from './types';
 import { D1Manager } from './db';
 import { createApiKey, listApiKeys, deleteApiKey, hasAnyApiKeys } from './apikeys';
 import { validateSQLStatement } from './security';
+import { safeJsonStringify } from './utils';
 
 export class Router {
   private dbManager: D1Manager;
@@ -341,7 +342,7 @@ export class Router {
   }
 
   private jsonResponse<T>(data: ApiResponse<T>, status: number = 200): Response {
-    return new Response(JSON.stringify(data, null, 2), {
+    return new Response(safeJsonStringify(data, 2), {
       status,
       headers: {
         'Content-Type': 'application/json',

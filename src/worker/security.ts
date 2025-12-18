@@ -140,11 +140,21 @@ export function validateSQLStatement(sql: string): void {
 
   // Check for dangerous schema modification keywords
   // These are still blocked even within allowed statements
+  // Use word boundary regex to match whole words only, not substrings
   const dangerousKeywords = ['DROP', 'CREATE', 'ALTER', 'TRUNCATE', 'EXEC', 'EXECUTE', 'ATTACH', 'DETACH'];
-  const upperSQL = sql.toUpperCase();
+
+  // Remove quoted identifiers and string literals to check for dangerous patterns
+  // This allows keywords like "create", "update", "delete" when used as properly quoted column names
+  let sqlWithoutQuotedContent = sql
+    .replace(/"[^"]*"/g, '""')  // Remove double-quoted identifiers
+    .replace(/'[^']*'/g, "''")  // Remove single-quoted string literals
+    .replace(/`[^`]*`/g, '``')  // Remove backtick-quoted identifiers
+    .toUpperCase();
 
   for (const keyword of dangerousKeywords) {
-    if (upperSQL.includes(keyword)) {
+    // Use word boundary regex to match whole words only
+    const keywordPattern = new RegExp(`\\b${keyword}\\b`);
+    if (keywordPattern.test(sqlWithoutQuotedContent)) {
       throw new Error(`SQL statement not allowed: contains dangerous keyword '${keyword}'`);
     }
   }

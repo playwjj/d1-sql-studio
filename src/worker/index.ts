@@ -1,6 +1,7 @@
 import { Env } from './types';
 import { authenticate, corsHeaders } from './auth';
 import { Router } from './router';
+import { safeJsonStringify } from './utils';
 
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
@@ -24,7 +25,7 @@ export default {
       if (!isKeysStatusCheck && !isFirstKeyCreation) {
         if (!(await authenticate(request, env))) {
           return new Response(
-            JSON.stringify({ success: false, error: 'Unauthorized' }),
+            safeJsonStringify({ success: false, error: 'Unauthorized' }),
             {
               status: 401,
               headers: {
@@ -52,7 +53,7 @@ export default {
       } catch (error: any) {
         if (error.message === 'DATABASE_NOT_BOUND') {
           return new Response(
-            JSON.stringify({
+            safeJsonStringify({
               success: false,
               error: 'DATABASE_NOT_BOUND',
               message: 'No D1 database is bound to this Worker. Please bind a database in Cloudflare Dashboard.'
