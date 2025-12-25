@@ -1,12 +1,15 @@
-import { useState, useEffect, useRef } from 'preact/hooks';
+import { useState, useEffect, useRef, useCallback } from 'preact/hooks';
 import { ApiClient } from '../../lib/api';
 import { Button, Alert } from '../shared';
 import { AddRowModal } from './AddRowModal';
 import { EditRowModal } from './EditRowModal';
 import { ApiDocumentation } from './ApiDocumentation';
 import { useNotification } from '../../contexts/NotificationContext';
-import { exportToCSV, exportToJSON, copySQLInserts } from '../../lib/exportUtils';
 import { useTableSchema } from '../../hooks/useTableSchema';
+import { useClickOutside } from '../../hooks/useClickOutside';
+import { useExport } from '../../hooks/useExport';
+import { DEFAULT_PAGE_LIMIT } from '../../config/constants';
+import { RowData } from '../../types';
 import { RefreshCw, Plus, Download, FileDown, FileJson, Database, Search, X } from 'lucide-preact';
 
 interface DataBrowserProps {
@@ -18,7 +21,7 @@ interface DataBrowserProps {
 export function DataBrowser({ apiClient, tableName, apiKey }: DataBrowserProps) {
   const { showToast, showConfirm } = useNotification();
   const { schema } = useTableSchema(apiClient, tableName);
-  const [data, setData] = useState<any[]>([]);
+  const [data, setData] = useState<RowData[]>([]);
   const [columns, setColumns] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -26,14 +29,23 @@ export function DataBrowser({ apiClient, tableName, apiKey }: DataBrowserProps) 
   const [total, setTotal] = useState(0);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
-  const [editingRow, setEditingRow] = useState<any>(null);
+  const [editingRow, setEditingRow] = useState<RowData | null>(null);
   const [sortBy, setSortBy] = useState<string>('');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [search, setSearch] = useState('');
   const [searchInput, setSearchInput] = useState('');
   const [showExportMenu, setShowExportMenu] = useState(false);
   const exportMenuRef = useRef<HTMLDivElement>(null);
-  const limit = 50;
+  const limit = DEFAULT_PAGE_LIMIT;
+
+  // Export functionality
+  const { handleExportCSV, handleExportJSON, handleCopySQLInserts } = useExport({
+    tableName,
+    onSuccess: () => setShowExportMenu(false),
+  });
+
+  // Click outside to close export menu
+  useClickOutside(exportMenuRef, () => setShowExportMenu(false), showExportMenu);
 
   // Update columns when schema loads
   useEffect(() => {
@@ -42,43 +54,7 @@ export function DataBrowser({ apiClient, tableName, apiKey }: DataBrowserProps) 
     }
   }, [schema]);
 
-  // Reset page when search or sort changes, BEFORE loading data
-  useEffect(() => {
-    // Only reset if page is not already 1
-    if (page !== 1) {
-      setPage(1);
-      return; // Don't load data here, let the next effect handle it
-    }
-    // If page is already 1, load data immediately
-    loadData();
-  }, [tableName, sortBy, sortOrder, search]);
-
-  // Load data when page changes (after reset or manual navigation)
-  useEffect(() => {
-    // Only trigger if page > 1 (page 1 is handled by previous effect)
-    if (page > 1) {
-      loadData();
-    }
-  }, [page]);
-
-  // Close export menu when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (exportMenuRef.current && !exportMenuRef.current.contains(event.target as Node)) {
-        setShowExportMenu(false);
-      }
-    };
-
-    if (showExportMenu) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [showExportMenu]);
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     setLoading(true);
     setError('');
     try {
@@ -105,25 +81,44 @@ export function DataBrowser({ apiClient, tableName, apiKey }: DataBrowserProps) 
     } finally {
       setLoading(false);
     }
-  };
+  }, [apiClient, tableName, page, limit, sortBy, sortOrder, search]);
 
-  const handleAddSuccess = () => {
+  // Reset page when search or sort changes, BEFORE loading data
+  useEffect(() => {
+    // Only reset if page is not already 1
+    if (page !== 1) {
+      setPage(1);
+      return; // Don't load data here, let the next effect handle it
+    }
+    // If page is already 1, load data immediately
+    loadData();
+  }, [tableName, sortBy, sortOrder, search, loadData]);
+
+  // Load data when page changes (after reset or manual navigation)
+  useEffect(() => {
+    // Only trigger if page > 1 (page 1 is handled by previous effect)
+    if (page > 1) {
+      loadData();
+    }
+  }, [page, loadData]);
+
+  const handleAddSuccess = useCallback(() => {
     setShowAddModal(false);
     loadData();
-  };
+  }, [loadData]);
 
-  const handleEditClick = (row: any) => {
+  const handleEditClick = useCallback((row: RowData) => {
     setEditingRow(row);
     setShowEditModal(true);
-  };
+  }, []);
 
-  const handleEditSuccess = () => {
+  const handleEditSuccess = useCallback(() => {
     setShowEditModal(false);
     setEditingRow(null);
     loadData();
-  };
+  }, [loadData]);
 
-  const handleDelete = async (row: any) => {
+  const handleDelete = useCallback(async (row: RowData) => {
     const confirmed = await showConfirm({
       title: 'Delete Row',
       message: 'Are you sure you want to delete this row?',
@@ -138,7 +133,7 @@ export function DataBrowser({ apiClient, tableName, apiKey }: DataBrowserProps) 
 
     try {
       const primaryKey = columns[0];
-      const id = row[primaryKey];
+      const id = String(row[primaryKey] ?? '');
       const result = await apiClient.deleteRow(tableName, id);
       if (result.success) {
         showToast({ message: 'Row deleted successfully', variant: 'success' });
@@ -149,9 +144,9 @@ export function DataBrowser({ apiClient, tableName, apiKey }: DataBrowserProps) 
     } catch (err: any) {
       showToast({ message: err.message || 'Failed to delete row', variant: 'danger' });
     }
-  };
+  }, [columns, apiClient, tableName, showConfirm, showToast, loadData]);
 
-  const handleSort = (column: string) => {
+  const handleSort = useCallback((column: string) => {
     if (sortBy === column) {
       // Toggle sort order if same column
       setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
@@ -160,47 +155,17 @@ export function DataBrowser({ apiClient, tableName, apiKey }: DataBrowserProps) 
       setSortBy(column);
       setSortOrder('asc');
     }
-  };
+  }, [sortBy, sortOrder]);
 
-  const handleSearchSubmit = (e: Event) => {
+  const handleSearchSubmit = useCallback((e: Event) => {
     e.preventDefault();
     setSearch(searchInput);
-  };
+  }, [searchInput]);
 
-  const handleSearchClear = () => {
+  const handleSearchClear = useCallback(() => {
     setSearchInput('');
     setSearch('');
-  };
-
-  const handleExportCSV = () => {
-    try {
-      exportToCSV(data, `${tableName}_export.csv`);
-      showToast({ message: 'Data exported to CSV successfully', variant: 'success' });
-      setShowExportMenu(false);
-    } catch (err: any) {
-      showToast({ message: err.message || 'Failed to export CSV', variant: 'danger' });
-    }
-  };
-
-  const handleExportJSON = () => {
-    try {
-      exportToJSON(data, `${tableName}_export.json`);
-      showToast({ message: 'Data exported to JSON successfully', variant: 'success' });
-      setShowExportMenu(false);
-    } catch (err: any) {
-      showToast({ message: err.message || 'Failed to export JSON', variant: 'danger' });
-    }
-  };
-
-  const handleCopySQLInserts = async () => {
-    try {
-      await copySQLInserts(data, tableName);
-      showToast({ message: 'SQL INSERT statements copied to clipboard', variant: 'success' });
-      setShowExportMenu(false);
-    } catch (err: any) {
-      showToast({ message: err.message || 'Failed to copy SQL', variant: 'danger' });
-    }
-  };
+  }, []);
 
   if (loading) {
     return (
@@ -270,7 +235,7 @@ export function DataBrowser({ apiClient, tableName, apiKey }: DataBrowserProps) 
             </Button>
             {showExportMenu && (
               <div className="export-dropdown">
-                <button className="export-dropdown-item" onClick={handleExportCSV}>
+                <button className="export-dropdown-item" onClick={() => handleExportCSV(data)}>
                   <span className="export-icon">
                     <FileDown size={18} />
                   </span>
@@ -279,7 +244,7 @@ export function DataBrowser({ apiClient, tableName, apiKey }: DataBrowserProps) 
                     <div className="export-desc">Download data in CSV format</div>
                   </div>
                 </button>
-                <button className="export-dropdown-item" onClick={handleExportJSON}>
+                <button className="export-dropdown-item" onClick={() => handleExportJSON(data)}>
                   <span className="export-icon">
                     <FileJson size={18} />
                   </span>
@@ -288,7 +253,7 @@ export function DataBrowser({ apiClient, tableName, apiKey }: DataBrowserProps) 
                     <div className="export-desc">Download data in JSON format</div>
                   </div>
                 </button>
-                <button className="export-dropdown-item" onClick={handleCopySQLInserts}>
+                <button className="export-dropdown-item" onClick={() => handleCopySQLInserts(data)}>
                   <span className="export-icon">
                     <Database size={18} />
                   </span>

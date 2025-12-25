@@ -2,21 +2,14 @@ import { useState, useEffect } from 'preact/hooks';
 import { Modal, Button, Alert } from '../shared';
 import { ApiClient } from '../../lib/api';
 import { useNotification } from '../../contexts/NotificationContext';
-
-interface Column {
-  name: string;
-  type: string;
-  notnull: boolean;
-  dflt_value: any;
-  pk: boolean;
-}
+import { ColumnInfo, RowData } from '../../types';
 
 interface EditRowModalProps {
   isOpen: boolean;
   onClose: () => void;
   apiClient: ApiClient;
   tableName: string;
-  rowData: Record<string, any>;
+  rowData: RowData;
   onSuccess: () => void;
 }
 
@@ -29,8 +22,8 @@ export function EditRowModal({
   onSuccess,
 }: EditRowModalProps) {
   const { showToast } = useNotification();
-  const [schema, setSchema] = useState<Column[]>([]);
-  const [formData, setFormData] = useState<Record<string, any>>({});
+  const [schema, setSchema] = useState<ColumnInfo[]>([]);
+  const [formData, setFormData] = useState<RowData>({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [schemaLoading, setSchemaLoading] = useState(true);
@@ -53,7 +46,7 @@ export function EditRowModal({
         setSchema(columns);
 
         // Find primary key
-        const pkColumn = columns.find((col: Column) => col.pk);
+        const pkColumn = columns.find((col) => col.pk === 1);
         if (pkColumn) {
           setPrimaryKey(pkColumn.name);
         }
@@ -99,13 +92,13 @@ export function EditRowModal({
 
         // Type conversion
         if (col.type === 'INTEGER') {
-          const num = parseInt(value, 10);
+          const num = parseInt(String(value ?? ''), 10);
           if (isNaN(num)) {
             throw new Error(`Field "${col.name}" must be a number`);
           }
           submitData[col.name] = num;
         } else if (col.type === 'REAL') {
-          const num = parseFloat(value);
+          const num = parseFloat(String(value ?? ''));
           if (isNaN(num)) {
             throw new Error(`Field "${col.name}" must be a number`);
           }
@@ -115,7 +108,7 @@ export function EditRowModal({
         }
       });
 
-      const result = await apiClient.updateRow(tableName, rowData[primaryKey], submitData);
+      const result = await apiClient.updateRow(tableName, String(rowData[primaryKey] ?? ''), submitData);
       if (result.success) {
         showToast({ message: 'Row updated successfully!', variant: 'success' });
         onSuccess();
@@ -156,8 +149,8 @@ export function EditRowModal({
               <div key={col.name} className="form-group">
                 <label htmlFor={`field-${col.name}`}>
                   {col.name}
-                  {!!col.pk && <span style="color: var(--warning); margin-left: 4px;">🔑</span>}
-                  {!!col.notnull && !col.pk && <span style="color: var(--danger); margin-left: 4px;">*</span>}
+                  {col.pk === 1 && <span style="color: var(--warning); margin-left: 4px;">🔑</span>}
+                  {col.notnull === 1 && col.pk !== 1 && <span style="color: var(--danger); margin-left: 4px;">*</span>}
                   <span style="color: var(--text-light); font-size: 12px; margin-left: 8px;">
                     ({col.type})
                   </span>
@@ -166,11 +159,11 @@ export function EditRowModal({
                   type="text"
                   id={`field-${col.name}`}
                   className="form-control"
-                  value={formData[col.name] === null ? '' : formData[col.name]}
+                  value={String(formData[col.name] ?? '')}
                   onInput={(e) => updateField(col.name, (e.target as HTMLInputElement).value)}
-                  disabled={col.pk}
-                  placeholder={col.pk ? 'Primary key (read-only)' : col.notnull ? 'Required' : 'Optional'}
-                  style={col.pk ? 'background: var(--bg); cursor: not-allowed;' : ''}
+                  disabled={col.pk === 1}
+                  placeholder={col.pk === 1 ? 'Primary key (read-only)' : col.notnull === 1 ? 'Required' : 'Optional'}
+                  style={col.pk === 1 ? 'background: var(--bg); cursor: not-allowed;' : ''}
                 />
               </div>
             ))}

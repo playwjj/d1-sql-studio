@@ -1,8 +1,9 @@
 import { useState, useMemo } from 'preact/hooks';
 import { Button } from '../shared';
+import { RowData } from '../../types';
 
 interface ResultsTableProps {
-  results: any[];
+  results: RowData[];
   pageSize?: number;
 }
 
@@ -102,11 +103,11 @@ export function ResultsTable({ results, pageSize = 50 }: ResultsTableProps) {
             </tr>
           </thead>
           <tbody>
-            {paginatedResults.map((row: any, idx: number) => (
+            {paginatedResults.map((row, idx: number) => (
               <tr key={idx}>
-                {columns.map((col: string, i: number) => (
+                {columns.map((col, i: number) => (
                   <td key={i}>
-                    {row[col] === null ? (
+                    {row[col] === null || row[col] === undefined ? (
                       <span style="color: var(--text-light); font-style: italic;">NULL</span>
                     ) : (
                       String(row[col])

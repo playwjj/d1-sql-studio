@@ -1,3 +1,5 @@
+import { QUERY_HISTORY_STORAGE_KEY, MAX_QUERY_HISTORY_ITEMS } from '../config/constants';
+
 export interface QueryHistoryItem {
   id: string;
   query: string;
@@ -7,9 +9,6 @@ export interface QueryHistoryItem {
   duration?: string;
   error?: string;
 }
-
-const STORAGE_KEY = 'd1_query_history';
-const MAX_HISTORY_ITEMS = 100;
 
 export class QueryHistoryManager {
   static saveQuery(
@@ -34,15 +33,15 @@ export class QueryHistoryManager {
     // Add to beginning of array
     history.unshift(item);
 
-    // Keep only the last MAX_HISTORY_ITEMS
-    const trimmedHistory = history.slice(0, MAX_HISTORY_ITEMS);
+    // Keep only the last MAX_QUERY_HISTORY_ITEMS
+    const trimmedHistory = history.slice(0, MAX_QUERY_HISTORY_ITEMS);
 
     this.setHistory(trimmedHistory);
   }
 
   static getHistory(): QueryHistoryItem[] {
     try {
-      const stored = localStorage.getItem(STORAGE_KEY);
+      const stored = localStorage.getItem(QUERY_HISTORY_STORAGE_KEY);
       if (!stored) return [];
       return JSON.parse(stored);
     } catch (error) {
@@ -52,7 +51,7 @@ export class QueryHistoryManager {
   }
 
   static clearHistory(): void {
-    localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem(QUERY_HISTORY_STORAGE_KEY);
   }
 
   static deleteItem(id: string): void {
@@ -81,7 +80,7 @@ export class QueryHistoryManager {
 
   private static setHistory(history: QueryHistoryItem[]): void {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(history));
+      localStorage.setItem(QUERY_HISTORY_STORAGE_KEY, JSON.stringify(history));
     } catch (error) {
       console.error('Failed to save query history:', error);
     }

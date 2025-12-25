@@ -3,14 +3,7 @@ import { Modal, Button, Alert } from '../shared';
 import { ApiClient } from '../../lib/api';
 import { generateUUID } from '../../lib/utils';
 import { useNotification } from '../../contexts/NotificationContext';
-
-interface Column {
-  name: string;
-  type: string;
-  notnull: boolean;
-  dflt_value: any;
-  pk: boolean;
-}
+import { ColumnInfo, RowData } from '../../types';
 
 interface AddRowModalProps {
   isOpen: boolean;
@@ -22,8 +15,8 @@ interface AddRowModalProps {
 
 export function AddRowModal({ isOpen, onClose, apiClient, tableName, onSuccess }: AddRowModalProps) {
   const { showToast } = useNotification();
-  const [schema, setSchema] = useState<Column[]>([]);
-  const [formData, setFormData] = useState<Record<string, any>>({});
+  const [schema, setSchema] = useState<ColumnInfo[]>([]);
+  const [formData, setFormData] = useState<RowData>({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [schemaLoading, setSchemaLoading] = useState(true);
@@ -44,8 +37,8 @@ export function AddRowModal({ isOpen, onClose, apiClient, tableName, onSuccess }
         setSchema(columns);
 
         // Initialize form data with default values
-        const initialData: Record<string, any> = {};
-        columns.forEach((col: Column) => {
+        const initialData: RowData = {};
+        columns.forEach((col) => {
           if (col.dflt_value !== null) {
             initialData[col.name] = col.dflt_value;
           } else {
@@ -97,13 +90,13 @@ export function AddRowModal({ isOpen, onClose, apiClient, tableName, onSuccess }
 
         // Type conversion
         if (col.type === 'INTEGER') {
-          const num = parseInt(value, 10);
+          const num = parseInt(String(value ?? ''), 10);
           if (isNaN(num)) {
             throw new Error(`Field "${col.name}" must be a number`);
           }
           submitData[col.name] = num;
         } else if (col.type === 'REAL') {
-          const num = parseFloat(value);
+          const num = parseFloat(String(value ?? ''));
           if (isNaN(num)) {
             throw new Error(`Field "${col.name}" must be a number`);
           }
@@ -138,9 +131,9 @@ export function AddRowModal({ isOpen, onClose, apiClient, tableName, onSuccess }
     setFormData({ ...formData, [name]: value });
   };
 
-  const shouldShowField = (col: Column): boolean => {
+  const shouldShowField = (col: ColumnInfo): boolean => {
     // Skip auto-increment INTEGER primary keys
-    if (col.pk && col.type === 'INTEGER') {
+    if (col.pk === 1 && col.type === 'INTEGER') {
       return false;
     }
     return true;
@@ -162,8 +155,8 @@ export function AddRowModal({ isOpen, onClose, apiClient, tableName, onSuccess }
               <div key={col.name} className="form-group">
                 <label htmlFor={`field-${col.name}`}>
                   {col.name}
-                  {!!col.pk && <span style="color: var(--warning); margin-left: 4px;">🔑</span>}
-                  {!!col.notnull && !col.pk && <span style="color: var(--danger); margin-left: 4px;">*</span>}
+                  {col.pk === 1 && <span style="color: var(--warning); margin-left: 4px;">🔑</span>}
+                  {col.notnull === 1 && col.pk !== 1 && <span style="color: var(--danger); margin-left: 4px;">*</span>}
                   <span style="color: var(--text-light); font-size: 12px; margin-left: 8px;">
                     ({col.type})
                   </span>
@@ -172,14 +165,14 @@ export function AddRowModal({ isOpen, onClose, apiClient, tableName, onSuccess }
                   type="text"
                   id={`field-${col.name}`}
                   className="form-control"
-                  value={formData[col.name] || ''}
+                  value={String(formData[col.name] ?? '')}
                   onInput={(e) => updateField(col.name, (e.target as HTMLInputElement).value)}
                   placeholder={
-                    col.pk && col.type === 'TEXT'
+                    col.pk === 1 && col.type === 'TEXT'
                       ? 'Leave empty to auto-generate UUID'
                       : col.dflt_value !== null
                       ? `Default: ${col.dflt_value}`
-                      : col.notnull
+                      : col.notnull === 1
                       ? 'Required'
                       : 'Optional'
                   }

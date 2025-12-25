@@ -1,33 +1,29 @@
-export interface ApiResponse<T = any> {
-  success: boolean;
-  data?: T;
-  error?: string;
-  message?: string;
-  meta?: {
-    page?: number;
-    limit?: number;
-    total?: number;
-  };
-}
+import {
+  ApiResponse,
+  JoinConfig,
+  JoinQueryRequest,
+  RowData,
+  DatabaseValue,
+  TableInfo,
+  ColumnInfo,
+  IndexInfo,
+  IndexColumn,
+  IndexWithColumns
+} from '../types';
 
-export interface JoinConfig {
-  table: string;
-  type: 'INNER' | 'LEFT' | 'RIGHT' | 'CROSS';
-  on?: string;  // Join condition, e.g., "users.id = orders.user_id"
-}
-
-export interface JoinQueryRequest {
-  baseTable: string;
-  joins: JoinConfig[];
-  select?: string[];  // Columns to select, defaults to ["*"]
-  where?: string;     // WHERE clause
-  groupBy?: string[]; // GROUP BY columns
-  having?: string;    // HAVING clause
-  orderBy?: string;   // ORDER BY clause, e.g., "created_at DESC"
-  limit?: number;
-  offset?: number;
-  params?: any[];     // Parameters for WHERE/HAVING conditions
-}
+// Re-export types for convenience
+export type {
+  ApiResponse,
+  JoinConfig,
+  JoinQueryRequest,
+  RowData,
+  DatabaseValue,
+  TableInfo,
+  ColumnInfo,
+  IndexInfo,
+  IndexColumn,
+  IndexWithColumns
+};
 
 export class ApiClient {
   constructor(private apiKey: string) {}
@@ -48,12 +44,12 @@ export class ApiClient {
     return response.json();
   }
 
-  async listTables() {
-    return this.request('/tables');
+  async listTables(): Promise<ApiResponse<TableInfo[]>> {
+    return this.request<TableInfo[]>('/tables');
   }
 
-  async getTableSchema(tableName: string) {
-    return this.request(`/tables/${tableName}/schema`);
+  async getTableSchema(tableName: string): Promise<ApiResponse<ColumnInfo[]>> {
+    return this.request<ColumnInfo[]>(`/tables/${tableName}/schema`);
   }
 
   async getTableData(
@@ -64,7 +60,7 @@ export class ApiClient {
     sortOrder: 'asc' | 'desc' = 'asc',
     search?: string,
     sort?: string  // Multi-field sort parameter, format: 'name:asc,created_at:desc'
-  ) {
+  ): Promise<ApiResponse<RowData[]>> {
     let url = `/tables/${tableName}/rows?page=${page}&limit=${limit}`;
 
     // Prioritize 'sort' parameter (multi-field sorting)
@@ -79,77 +75,86 @@ export class ApiClient {
     if (search) {
       url += `&search=${encodeURIComponent(search)}`;
     }
-    return this.request(url);
+    return this.request<RowData[]>(url);
   }
 
-  async executeQuery(sql: string, params?: any[]) {
+  async executeQuery(sql: string, params?: DatabaseValue[]): Promise<ApiResponse> {
     return this.request('/query', {
       method: 'POST',
       body: JSON.stringify({ sql, params }),
     });
   }
 
-  async joinQuery(joinRequest: JoinQueryRequest) {
-    return this.request('/join', {
+  async joinQuery(joinRequest: JoinQueryRequest): Promise<ApiResponse<RowData[]>> {
+    return this.request<RowData[]>('/join', {
       method: 'POST',
       body: JSON.stringify(joinRequest),
     });
   }
 
-  async createTable(sql: string) {
+  async createTable(sql: string): Promise<ApiResponse> {
     return this.request('/tables', {
       method: 'POST',
       body: JSON.stringify({ sql }),
     });
   }
 
-  async deleteTable(tableName: string) {
+  async deleteTable(tableName: string): Promise<ApiResponse> {
     return this.request(`/tables/${tableName}`, {
       method: 'DELETE',
     });
   }
 
-  async insertRow(tableName: string, data: Record<string, any>) {
+  async insertRow(tableName: string, data: RowData): Promise<ApiResponse> {
     return this.request(`/tables/${tableName}/rows`, {
       method: 'POST',
       body: JSON.stringify(data),
     });
   }
 
-  async updateRow(tableName: string, id: string, data: Record<string, any>) {
+  async updateRow(tableName: string, id: string, data: RowData): Promise<ApiResponse> {
     return this.request(`/tables/${tableName}/rows/${id}`, {
       method: 'PUT',
       body: JSON.stringify(data),
     });
   }
 
-  async deleteRow(tableName: string, id: string) {
+  async deleteRow(tableName: string, id: string): Promise<ApiResponse> {
     return this.request(`/tables/${tableName}/rows/${id}`, {
       method: 'DELETE',
     });
   }
 
-  async addColumn(tableName: string, columnName: string, columnType: string, constraints?: string) {
+  async addColumn(
+    tableName: string,
+    columnName: string,
+    columnType: string,
+    constraints?: string
+  ): Promise<ApiResponse> {
     return this.request(`/tables/${tableName}/columns`, {
       method: 'POST',
       body: JSON.stringify({ columnName, columnType, constraints }),
     });
   }
 
-  async dropColumn(tableName: string, columnName: string) {
+  async dropColumn(tableName: string, columnName: string): Promise<ApiResponse> {
     return this.request(`/tables/${tableName}/columns/${columnName}`, {
       method: 'DELETE',
     });
   }
 
-  async renameColumn(tableName: string, oldColumnName: string, newColumnName: string) {
+  async renameColumn(
+    tableName: string,
+    oldColumnName: string,
+    newColumnName: string
+  ): Promise<ApiResponse> {
     return this.request(`/tables/${tableName}/columns/${oldColumnName}`, {
       method: 'PUT',
       body: JSON.stringify({ newColumnName }),
     });
   }
 
-  async renameTable(oldTableName: string, newTableName: string) {
+  async renameTable(oldTableName: string, newTableName: string): Promise<ApiResponse> {
     return this.request(`/tables/${oldTableName}/rename`, {
       method: 'PUT',
       body: JSON.stringify({ newTableName }),
@@ -157,22 +162,27 @@ export class ApiClient {
   }
 
   // Index management methods
-  async listIndexes(tableName: string) {
-    return this.request(`/tables/${tableName}/indexes`);
+  async listIndexes(tableName: string): Promise<ApiResponse<IndexInfo[]>> {
+    return this.request<IndexInfo[]>(`/tables/${tableName}/indexes`);
   }
 
-  async getIndexColumns(tableName: string, indexName: string) {
-    return this.request(`/tables/${tableName}/indexes/${indexName}/columns`);
+  async getIndexColumns(tableName: string, indexName: string): Promise<ApiResponse<IndexColumn[]>> {
+    return this.request<IndexColumn[]>(`/tables/${tableName}/indexes/${indexName}/columns`);
   }
 
-  async createIndex(tableName: string, indexName: string, columns: string[], unique: boolean = false) {
+  async createIndex(
+    tableName: string,
+    indexName: string,
+    columns: string[],
+    unique: boolean = false
+  ): Promise<ApiResponse> {
     return this.request(`/tables/${tableName}/indexes`, {
       method: 'POST',
       body: JSON.stringify({ indexName, columns, unique }),
     });
   }
 
-  async dropIndex(tableName: string, indexName: string) {
+  async dropIndex(tableName: string, indexName: string): Promise<ApiResponse> {
     return this.request(`/tables/${tableName}/indexes/${indexName}`, {
       method: 'DELETE',
     });

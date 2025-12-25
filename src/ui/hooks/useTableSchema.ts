@@ -1,19 +1,8 @@
 import { useState, useEffect, useCallback } from 'preact/hooks';
 import { ApiClient } from '../lib/api';
+import { ColumnInfo, CacheEntry } from '../types';
 
-interface ColumnInfo {
-  cid: number;
-  name: string;
-  type: string;
-  notnull: number;
-  dflt_value: any;
-  pk: number;
-}
-
-interface SchemaCache {
-  data: ColumnInfo[];
-  timestamp: number;
-}
+type SchemaCache = CacheEntry<ColumnInfo[]>;
 
 // Global cache shared across all components
 const schemaCache = new Map<string, SchemaCache>();

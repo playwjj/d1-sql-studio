@@ -1,9 +1,11 @@
-import { useState, useRef, useEffect } from 'preact/hooks';
+import { useState, useRef, useEffect, useCallback } from 'preact/hooks';
 import { ApiClient } from '../../lib/api';
 import { Button, Alert } from '../shared';
-import { exportToCSV, exportToJSON, copySQLInserts } from '../../lib/exportUtils';
 import { useNotification } from '../../contexts/NotificationContext';
+import { useClickOutside } from '../../hooks/useClickOutside';
+import { useExport } from '../../hooks/useExport';
 import { QueryHistoryManager } from '../../lib/queryHistory';
+import { QueryResult } from '../../types';
 import { SqlEditor } from './SqlEditor';
 import { ResultsTable } from './ResultsTable';
 import { QueryHistory } from './QueryHistory';
@@ -17,7 +19,7 @@ interface QueryEditorProps {
 export function QueryEditor({ apiClient }: QueryEditorProps) {
   const { showToast } = useNotification();
   const [sql, setSql] = useState('');
-  const [result, setResult] = useState<any>(null);
+  const [result, setResult] = useState<QueryResult | null>(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [showExportMenu, setShowExportMenu] = useState(false);
@@ -26,12 +28,19 @@ export function QueryEditor({ apiClient }: QueryEditorProps) {
   const [tables, setTables] = useState<string[]>([]);
   const exportMenuRef = useRef<HTMLDivElement>(null);
 
-  // Load tables for autocomplete
-  useEffect(() => {
-    loadTables();
-  }, []);
+  // Extract table name from SQL for exports
+  const tableName = sql.match(/FROM\s+(\w+)/i)?.[1] || 'query_results';
 
-  const loadTables = async () => {
+  // Export functionality with dynamic table name
+  const { handleExportCSV, handleExportJSON, handleCopySQLInserts } = useExport({
+    tableName: 'query_results',
+    onSuccess: () => setShowExportMenu(false),
+  });
+
+  // Click outside to close export menu
+  useClickOutside(exportMenuRef, () => setShowExportMenu(false), showExportMenu);
+
+  const loadTables = useCallback(async () => {
     try {
       const response = await apiClient.listTables();
       if (response.success && response.data && Array.isArray(response.data)) {
@@ -41,9 +50,14 @@ export function QueryEditor({ apiClient }: QueryEditorProps) {
     } catch (err) {
       console.error('Failed to load tables:', err);
     }
-  };
+  }, [apiClient]);
 
-  const executeQuery = async () => {
+  // Load tables for autocomplete
+  useEffect(() => {
+    loadTables();
+  }, [loadTables]);
+
+  const executeQuery = useCallback(async () => {
     if (!sql.trim()) {
       setError('Please enter a SQL query');
       return;
@@ -60,7 +74,7 @@ export function QueryEditor({ apiClient }: QueryEditorProps) {
       const duration = `${(performance.now() - startTime).toFixed(2)}ms`;
 
       if (response.success) {
-        setResult(response.data);
+        setResult(response.data as QueryResult);
 
         // Save to history
         QueryHistoryManager.saveQuery(
@@ -91,9 +105,9 @@ export function QueryEditor({ apiClient }: QueryEditorProps) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [sql, apiClient, showToast]);
 
-  const formatSQL = () => {
+  const formatSQL = useCallback(() => {
     if (!sql.trim()) {
       showToast({ message: 'No SQL to format', variant: 'warning' });
       return;
@@ -111,51 +125,7 @@ export function QueryEditor({ apiClient }: QueryEditorProps) {
     } catch (err: any) {
       showToast({ message: 'Failed to format SQL: ' + err.message, variant: 'danger' });
     }
-  };
-
-  const handleExportCSV = () => {
-    try {
-      if (!result?.results || result.results.length === 0) {
-        showToast({ message: 'No results to export', variant: 'warning' });
-        return;
-      }
-      exportToCSV(result.results, 'query_results.csv');
-      showToast({ message: 'Results exported to CSV successfully', variant: 'success' });
-      setShowExportMenu(false);
-    } catch (err: any) {
-      showToast({ message: err.message || 'Failed to export CSV', variant: 'danger' });
-    }
-  };
-
-  const handleExportJSON = () => {
-    try {
-      if (!result?.results || result.results.length === 0) {
-        showToast({ message: 'No results to export', variant: 'warning' });
-        return;
-      }
-      exportToJSON(result.results, 'query_results.json');
-      showToast({ message: 'Results exported to JSON successfully', variant: 'success' });
-      setShowExportMenu(false);
-    } catch (err: any) {
-      showToast({ message: err.message || 'Failed to export JSON', variant: 'danger' });
-    }
-  };
-
-  const handleCopySQLInserts = async () => {
-    try {
-      if (!result?.results || result.results.length === 0) {
-        showToast({ message: 'No results to copy', variant: 'warning' });
-        return;
-      }
-      // Extract table name from SQL if possible, otherwise use 'table_name'
-      const tableName = sql.match(/FROM\s+(\w+)/i)?.[1] || 'query_results';
-      await copySQLInserts(result.results, tableName);
-      showToast({ message: 'SQL INSERT statements copied to clipboard', variant: 'success' });
-      setShowExportMenu(false);
-    } catch (err: any) {
-      showToast({ message: err.message || 'Failed to copy SQL', variant: 'danger' });
-    }
-  };
+  }, [sql, setSql, showToast]);
 
   // Handle keyboard shortcuts
   useEffect(() => {
@@ -179,7 +149,7 @@ export function QueryEditor({ apiClient }: QueryEditorProps) {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [sql]);
+  }, [formatSQL]);
 
   return (
     <div>
@@ -266,21 +236,21 @@ export function QueryEditor({ apiClient }: QueryEditorProps) {
                   </Button>
                   {showExportMenu && (
                     <div className="export-dropdown">
-                      <button className="export-dropdown-item" onClick={handleExportCSV}>
+                      <button className="export-dropdown-item" onClick={() => handleExportCSV(result.results, 'query_results.csv')}>
                         <span className="export-icon">📄</span>
                         <div>
                           <div className="export-title">Export as CSV</div>
                           <div className="export-desc">Download results in CSV format</div>
                         </div>
                       </button>
-                      <button className="export-dropdown-item" onClick={handleExportJSON}>
+                      <button className="export-dropdown-item" onClick={() => handleExportJSON(result.results, 'query_results.json')}>
                         <span className="export-icon">📋</span>
                         <div>
                           <div className="export-title">Export as JSON</div>
                           <div className="export-desc">Download results in JSON format</div>
                         </div>
                       </button>
-                      <button className="export-dropdown-item" onClick={handleCopySQLInserts}>
+                      <button className="export-dropdown-item" onClick={() => handleCopySQLInserts(result.results, tableName)}>
                         <span className="export-icon">💾</span>
                         <div>
                           <div className="export-title">Copy as SQL INSERT</div>

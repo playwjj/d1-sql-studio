@@ -3,12 +3,8 @@ import { ApiClient } from '../../lib/api';
 import { Button } from '../shared';
 import { Alert } from '../shared/Alert';
 import { useNotification } from '../../contexts/NotificationContext';
+import { TableInfo } from '../../types';
 import { FileText, Edit3, Trash2, Palette, FileCode } from 'lucide-preact';
-
-interface Table {
-  name: string;
-  type: string;
-}
 
 interface TablesListProps {
   apiClient: ApiClient;
@@ -20,7 +16,7 @@ interface TablesListProps {
 
 export function TablesList({ apiClient, onTableSelect, onCreateTable, onVisualBuilder, onEditTable }: TablesListProps) {
   const { showToast, showConfirm } = useNotification();
-  const [tables, setTables] = useState<Table[]>([]);
+  const [tables, setTables] = useState<TableInfo[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 

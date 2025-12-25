@@ -2,25 +2,8 @@ import { useState, useEffect } from 'preact/hooks';
 import { ApiClient } from '../../lib/api';
 import { Button, Alert } from '../shared';
 import { useNotification } from '../../contexts/NotificationContext';
+import { IndexWithColumns } from '../../types';
 import { Plus, Trash2, Info } from 'lucide-preact';
-
-interface IndexInfo {
-  seq: number;
-  name: string;
-  unique: number;
-  origin: string;
-  partial: number;
-}
-
-interface IndexColumn {
-  seqno: number;
-  cid: number;
-  name: string;
-}
-
-interface IndexWithColumns extends IndexInfo {
-  columns?: IndexColumn[];
-}
 
 interface IndexManagementProps {
   apiClient: ApiClient;
