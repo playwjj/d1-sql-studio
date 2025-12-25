@@ -60,3 +60,23 @@ export interface JoinQueryRequest {
   offset?: number;
   params?: any[];     // Parameters for WHERE/HAVING conditions
 }
+
+export interface IndexInfo {
+  seq: number;       // Sequence number within index
+  name: string;      // Index name
+  unique: number;    // 1 if UNIQUE, 0 otherwise
+  origin: string;    // 'c' = CREATE INDEX, 'u' = UNIQUE constraint, 'pk' = PRIMARY KEY
+  partial: number;   // 1 if partial index, 0 otherwise
+}
+
+export interface IndexColumn {
+  seqno: number;     // Column sequence in index
+  cid: number;       // Column ID in table
+  name: string;      // Column name
+}
+
+export interface CreateIndexRequest {
+  indexName: string;
+  columns: string[]; // Column names to index
+  unique?: boolean;  // Whether to create UNIQUE index
+}

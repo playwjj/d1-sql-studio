@@ -4,6 +4,7 @@ import { Modal, Button, Alert } from '../shared';
 import { useNotification } from '../../contexts/NotificationContext';
 import { FormField } from '../shared/FormField';
 import { copyToClipboard } from '../../lib/exportUtils';
+import { IndexManagement } from './IndexManagement';
 
 interface ColumnInfo {
   cid: number;
@@ -22,7 +23,7 @@ interface EditTableModalProps {
   onSuccess: () => void;
 }
 
-type EditMode = 'main' | 'add' | 'rename' | 'renameTable';
+type EditMode = 'main' | 'add' | 'rename' | 'renameTable' | 'indexes';
 
 export function EditTableModal({ isOpen, onClose, apiClient, tableName, onSuccess }: EditTableModalProps) {
   const { showToast, showConfirm } = useNotification();
@@ -293,6 +294,9 @@ export function EditTableModal({ isOpen, onClose, apiClient, tableName, onSucces
           </Button>
           <Button onClick={() => setMode('rename')} variant="secondary">
             Rename Column
+          </Button>
+          <Button onClick={() => setMode('indexes')} variant="secondary">
+            🔍 Manage Indexes
           </Button>
           <Button onClick={() => setMode('renameTable')} variant="secondary">
             Rename Table
@@ -566,6 +570,20 @@ export function EditTableModal({ isOpen, onClose, apiClient, tableName, onSucces
       {mode === 'add' && renderAddColumnView()}
       {mode === 'rename' && renderRenameColumnView()}
       {mode === 'renameTable' && renderRenameTableView()}
+      {mode === 'indexes' && (
+        <div>
+          <IndexManagement
+            apiClient={apiClient}
+            tableName={tableName}
+            columns={columns}
+          />
+          <div style="display: flex; justify-content: flex-end; margin-top: 20px;">
+            <Button onClick={() => setMode('main')} variant="secondary">
+              ← Back
+            </Button>
+          </div>
+        </div>
+      )}
 
       {mode === 'main' && (
         <div style="display: flex; justify-content: flex-end; margin-top: 20px;">

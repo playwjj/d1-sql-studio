@@ -41,9 +41,10 @@ const DANGEROUS_PATTERNS = [
 /**
  * Allowed SQL statement types for executeQuery
  * Allows read operations (SELECT, PRAGMA) and write operations (INSERT, UPDATE, DELETE)
- * Still blocks dangerous schema changes (DROP, CREATE, ALTER, TRUNCATE)
+ * Allows index management (CREATE INDEX, DROP INDEX)
+ * Still blocks dangerous schema changes (CREATE TABLE, DROP TABLE, ALTER, TRUNCATE)
  */
-const ALLOWED_SQL_STATEMENTS = ['SELECT', 'PRAGMA', 'INSERT', 'UPDATE', 'DELETE'];
+const ALLOWED_SQL_STATEMENTS = ['SELECT', 'PRAGMA', 'INSERT', 'UPDATE', 'DELETE', 'CREATE', 'DROP'];
 
 /**
  * Validates a SQL identifier (table name, column name, etc.)
@@ -115,8 +116,8 @@ export function quoteIdentifier(identifier: string): string {
 
 /**
  * Validates a SQL statement to ensure it's safe to execute
- * Allows: SELECT, PRAGMA, INSERT, UPDATE, DELETE
- * Blocks: DROP, CREATE, ALTER, TRUNCATE, and other DDL/admin commands
+ * Allows: SELECT, PRAGMA, INSERT, UPDATE, DELETE, CREATE INDEX, DROP INDEX
+ * Blocks: CREATE TABLE, DROP TABLE, ALTER, TRUNCATE, and other dangerous DDL/admin commands
  *
  * @param sql - The SQL statement to validate
  * @throws Error if SQL is not allowed
@@ -132,16 +133,36 @@ export function validateSQLStatement(sql: string): void {
 
   // Check if it's an allowed statement type
   if (!ALLOWED_SQL_STATEMENTS.includes(firstWord)) {
-    throw new Error(`SQL statement not allowed: only SELECT, PRAGMA, INSERT, UPDATE, DELETE queries are permitted. Received: ${firstWord}`);
+    throw new Error(`SQL statement not allowed: only SELECT, PRAGMA, INSERT, UPDATE, DELETE, CREATE INDEX, DROP INDEX queries are permitted. Received: ${firstWord}`);
   }
 
-  // Check for dangerous schema modification keywords
+  // Special handling for CREATE and DROP - only allow INDEX operations
+  if (firstWord === 'CREATE') {
+    const secondWord = trimmed.split(/\s+/)[1]?.toUpperCase();
+    if (secondWord !== 'INDEX' && secondWord !== 'UNIQUE') {
+      throw new Error('SQL statement not allowed: only CREATE INDEX and CREATE UNIQUE INDEX are permitted. Use the UI or API for other schema changes.');
+    }
+    // For CREATE UNIQUE INDEX, check third word
+    if (secondWord === 'UNIQUE') {
+      const thirdWord = trimmed.split(/\s+/)[2]?.toUpperCase();
+      if (thirdWord !== 'INDEX') {
+        throw new Error('SQL statement not allowed: only CREATE UNIQUE INDEX is permitted after CREATE UNIQUE.');
+      }
+    }
+  }
+
+  if (firstWord === 'DROP') {
+    const secondWord = trimmed.split(/\s+/)[1]?.toUpperCase();
+    if (secondWord !== 'INDEX') {
+      throw new Error('SQL statement not allowed: only DROP INDEX is permitted. Use the UI or API for other schema changes.');
+    }
+  }
+
+  // Check for dangerous schema modification keywords (exclude CREATE INDEX and DROP INDEX)
   // These are still blocked even within allowed statements
-  // Use word boundary regex to match whole words only, not substrings
-  const dangerousKeywords = ['DROP', 'CREATE', 'ALTER', 'TRUNCATE', 'EXEC', 'EXECUTE', 'ATTACH', 'DETACH'];
+  const dangerousKeywords = ['ALTER', 'TRUNCATE', 'EXEC', 'EXECUTE', 'ATTACH', 'DETACH'];
 
   // Remove quoted identifiers and string literals to check for dangerous patterns
-  // This allows keywords like "create", "update", "delete" when used as properly quoted column names
   let sqlWithoutQuotedContent = sql
     .replace(/"[^"]*"/g, '""')  // Remove double-quoted identifiers
     .replace(/'[^']*'/g, "''")  // Remove single-quoted string literals
@@ -153,6 +174,15 @@ export function validateSQLStatement(sql: string): void {
     const keywordPattern = new RegExp(`\\b${keyword}\\b`);
     if (keywordPattern.test(sqlWithoutQuotedContent)) {
       throw new Error(`SQL statement not allowed: contains dangerous keyword '${keyword}'`);
+    }
+  }
+
+  // Additional check: Block CREATE TABLE, DROP TABLE, CREATE VIEW, DROP VIEW, etc.
+  const blockedCreateDrop = ['TABLE', 'VIEW', 'TRIGGER', 'DATABASE'];
+  for (const keyword of blockedCreateDrop) {
+    const pattern = new RegExp(`\\b(CREATE|DROP)\\s+${keyword}\\b`, 'i');
+    if (pattern.test(sqlWithoutQuotedContent)) {
+      throw new Error(`SQL statement not allowed: CREATE/DROP ${keyword} is not permitted. Use the UI or API for table/view management.`);
     }
   }
 

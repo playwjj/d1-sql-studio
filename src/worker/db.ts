@@ -1,4 +1,4 @@
-import { Env, TableInfo, ColumnInfo, JoinQueryRequest, JoinConfig } from './types';
+import { Env, TableInfo, ColumnInfo, JoinQueryRequest, JoinConfig, IndexInfo, IndexColumn, CreateIndexRequest } from './types';
 import { validateIdentifier, validateIdentifiers, quoteIdentifier, validateRowData, validatePagination } from './security';
 
 interface SchemaCache {
@@ -412,6 +412,79 @@ export class D1Manager {
     const quotedNewTable = quoteIdentifier(newTableName);
 
     const sql = `ALTER TABLE ${quotedOldTable} RENAME TO ${quotedNewTable}`;
+    return await this.db.prepare(sql).run();
+  }
+
+  /**
+   * Get list of indexes for a table
+   * @param tableName - Name of the table
+   * @returns Array of index information
+   */
+  async listIndexes(tableName: string): Promise<IndexInfo[]> {
+    validateIdentifier(tableName, 'table name');
+
+    const result = await this.db
+      .prepare(`PRAGMA index_list(${quoteIdentifier(tableName)})`)
+      .all<IndexInfo>();
+
+    return result.results || [];
+  }
+
+  /**
+   * Get columns in a specific index
+   * @param indexName - Name of the index
+   * @returns Array of column information
+   */
+  async getIndexColumns(indexName: string): Promise<IndexColumn[]> {
+    validateIdentifier(indexName, 'index name');
+
+    const result = await this.db
+      .prepare(`PRAGMA index_info(${quoteIdentifier(indexName)})`)
+      .all<IndexColumn>();
+
+    return result.results || [];
+  }
+
+  /**
+   * Create an index on a table
+   * @param tableName - Name of the table
+   * @param request - Index creation parameters
+   */
+  async createIndex(tableName: string, request: CreateIndexRequest) {
+    validateIdentifier(tableName, 'table name');
+    validateIdentifier(request.indexName, 'index name');
+
+    if (!request.columns || request.columns.length === 0) {
+      throw new Error('At least one column must be specified for the index');
+    }
+
+    if (request.columns.length > 10) {
+      throw new Error('Too many columns in index (maximum 10)');
+    }
+
+    // Validate all column names
+    request.columns.forEach(col => validateIdentifier(col, 'column name'));
+
+    const quotedTable = quoteIdentifier(tableName);
+    const quotedIndex = quoteIdentifier(request.indexName);
+    const quotedColumns = request.columns.map(col => quoteIdentifier(col)).join(', ');
+
+    const uniqueClause = request.unique ? 'UNIQUE ' : '';
+    const sql = `CREATE ${uniqueClause}INDEX ${quotedIndex} ON ${quotedTable} (${quotedColumns})`;
+
+    return await this.db.prepare(sql).run();
+  }
+
+  /**
+   * Drop an index
+   * @param indexName - Name of the index to drop
+   */
+  async dropIndex(indexName: string) {
+    validateIdentifier(indexName, 'index name');
+
+    const quotedIndex = quoteIdentifier(indexName);
+    const sql = `DROP INDEX ${quotedIndex}`;
+
     return await this.db.prepare(sql).run();
   }
 

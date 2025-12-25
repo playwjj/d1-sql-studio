@@ -155,4 +155,26 @@ export class ApiClient {
       body: JSON.stringify({ newTableName }),
     });
   }
+
+  // Index management methods
+  async listIndexes(tableName: string) {
+    return this.request(`/tables/${tableName}/indexes`);
+  }
+
+  async getIndexColumns(tableName: string, indexName: string) {
+    return this.request(`/tables/${tableName}/indexes/${indexName}/columns`);
+  }
+
+  async createIndex(tableName: string, indexName: string, columns: string[], unique: boolean = false) {
+    return this.request(`/tables/${tableName}/indexes`, {
+      method: 'POST',
+      body: JSON.stringify({ indexName, columns, unique }),
+    });
+  }
+
+  async dropIndex(tableName: string, indexName: string) {
+    return this.request(`/tables/${tableName}/indexes/${indexName}`, {
+      method: 'DELETE',
+    });
+  }
 }

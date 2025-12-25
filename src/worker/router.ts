@@ -1,4 +1,4 @@
-import { Env, ApiResponse, JoinQueryRequest } from './types';
+import { Env, ApiResponse, JoinQueryRequest, CreateIndexRequest } from './types';
 import { D1Manager } from './db';
 import { createApiKey, listApiKeys, deleteApiKey, hasAnyApiKeys } from './apikeys';
 import { validateSQLStatement } from './security';
@@ -137,6 +137,29 @@ export class Router {
         return await this.renameTable(request, tableName);
       }
 
+      // Index management routes
+      if (method === 'GET' && path.match(/^\/api\/tables\/[^/]+\/indexes$/)) {
+        const tableName = decodeURIComponent(path.split('/')[3]);
+        return await this.listIndexes(tableName);
+      }
+
+      if (method === 'GET' && path.match(/^\/api\/tables\/[^/]+\/indexes\/[^/]+\/columns$/)) {
+        const parts = path.split('/');
+        const indexName = decodeURIComponent(parts[5]);
+        return await this.getIndexColumns(indexName);
+      }
+
+      if (method === 'POST' && path.match(/^\/api\/tables\/[^/]+\/indexes$/)) {
+        const tableName = decodeURIComponent(path.split('/')[3]);
+        return await this.createIndex(request, tableName);
+      }
+
+      if (method === 'DELETE' && path.match(/^\/api\/tables\/[^/]+\/indexes\/[^/]+$/)) {
+        const parts = path.split('/');
+        const indexName = decodeURIComponent(parts[5]);
+        return await this.dropIndex(indexName);
+      }
+
       return this.jsonResponse({ success: false, error: 'Not found' }, 404);
     } catch (error: any) {
       return this.jsonResponse({ success: false, error: error.message }, 500);
@@ -157,7 +180,8 @@ export class Router {
     const body = await request.json<{ sql: string; params?: any[] }>();
 
     // SECURITY: Validate SQL to allow data operations (SELECT, INSERT, UPDATE, DELETE, PRAGMA)
-    // Still blocks dangerous schema changes (DROP, CREATE, ALTER, TRUNCATE)
+    // and index management (CREATE INDEX, DROP INDEX)
+    // Still blocks dangerous schema changes (CREATE TABLE, DROP TABLE, ALTER, TRUNCATE)
     validateSQLStatement(body.sql);
 
     const result = await this.dbManager.executeQuery(body.sql, body.params);
@@ -373,6 +397,37 @@ export class Router {
     }
 
     const result = await this.dbManager.renameTable(tableName, body.newTableName);
+    return this.jsonResponse({ success: true, data: result });
+  }
+
+  // Index management methods
+  private async listIndexes(tableName: string): Promise<Response> {
+    const indexes = await this.dbManager.listIndexes(tableName);
+    return this.jsonResponse({ success: true, data: indexes }, 200, { cacheable: true });
+  }
+
+  private async getIndexColumns(indexName: string): Promise<Response> {
+    const columns = await this.dbManager.getIndexColumns(indexName);
+    return this.jsonResponse({ success: true, data: columns });
+  }
+
+  private async createIndex(request: Request, tableName: string): Promise<Response> {
+    const body = await request.json<CreateIndexRequest>();
+
+    if (!body.indexName) {
+      return this.jsonResponse({ success: false, error: 'Index name is required' }, 400);
+    }
+
+    if (!body.columns || body.columns.length === 0) {
+      return this.jsonResponse({ success: false, error: 'At least one column is required' }, 400);
+    }
+
+    const result = await this.dbManager.createIndex(tableName, body);
+    return this.jsonResponse({ success: true, data: result });
+  }
+
+  private async dropIndex(indexName: string): Promise<Response> {
+    const result = await this.dbManager.dropIndex(indexName);
     return this.jsonResponse({ success: true, data: result });
   }
 
