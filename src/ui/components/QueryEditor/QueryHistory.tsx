@@ -129,7 +129,7 @@ export function QueryHistory({ onSelectQuery, onClose }: QueryHistoryProps) {
               </div>
             </div>
           ) : (
-            <div style="display: flex; flex-direction: column; gap: 12px; max-height: 500px; overflow-y: auto;">
+            <div style="display: flex; flex-direction: column; gap: 12px;">
               {history.map((item) => (
                 <div
                   key={item.id}
@@ -142,8 +142,8 @@ export function QueryHistory({ onSelectQuery, onClose }: QueryHistoryProps) {
                     (e.currentTarget as HTMLElement).style.borderColor = '';
                   }}
                 >
-                  <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 10px;">
-                    <div style="display: flex; align-items: center; gap: 10px;">
+                  <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 10px; gap: 12px; flex-wrap: wrap;">
+                    <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
                       <span className={`badge ${item.success ? 'badge-success' : 'badge-danger'}`}>
                         {item.success ? '✓' : '✗'}
                       </span>
@@ -161,7 +161,7 @@ export function QueryHistory({ onSelectQuery, onClose }: QueryHistoryProps) {
                         </span>
                       )}
                     </div>
-                    <div style="display: flex; gap: 8px;">
+                    <div style="display: flex; gap: 8px; flex-shrink: 0;">
                       <Button
                         variant="primary"
                         className="btn-sm"
