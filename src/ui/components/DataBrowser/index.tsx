@@ -7,6 +7,7 @@ import { ApiDocumentation } from './ApiDocumentation';
 import { useNotification } from '../../contexts/NotificationContext';
 import { exportToCSV, exportToJSON, copySQLInserts } from '../../lib/exportUtils';
 import { useTableSchema } from '../../hooks/useTableSchema';
+import { RefreshCw, Plus, Download, FileDown, FileJson, Database, Search, X } from 'lucide-preact';
 
 interface DataBrowserProps {
   apiClient: ApiClient;
@@ -221,10 +222,12 @@ export function DataBrowser({ apiClient, tableName, apiKey }: DataBrowserProps) 
           <h3>{tableName} (0 rows)</h3>
           <div style="display: flex; gap: 10px;">
             <Button variant="secondary" className="btn-sm" onClick={() => loadData()}>
-              🔄 Refresh
+              <RefreshCw size={14} />
+              <span>Refresh</span>
             </Button>
             <Button variant="success" className="btn-sm" onClick={() => setShowAddModal(true)}>
-              ➕ Add Row
+              <Plus size={14} />
+              <span>Add Row</span>
             </Button>
           </div>
         </div>
@@ -253,7 +256,8 @@ export function DataBrowser({ apiClient, tableName, apiKey }: DataBrowserProps) 
         <h3>{tableName} ({total} rows)</h3>
         <div style="display: flex; gap: 10px; position: relative;">
           <Button variant="secondary" className="btn-sm" onClick={() => loadData()}>
-            🔄 Refresh
+            <RefreshCw size={14} />
+            <span>Refresh</span>
           </Button>
           <div ref={exportMenuRef} style="position: relative;">
             <Button
@@ -261,26 +265,33 @@ export function DataBrowser({ apiClient, tableName, apiKey }: DataBrowserProps) 
               className="btn-sm"
               onClick={() => setShowExportMenu(!showExportMenu)}
             >
-              📥 Export
+              <Download size={14} />
+              <span>Export</span>
             </Button>
             {showExportMenu && (
               <div className="export-dropdown">
                 <button className="export-dropdown-item" onClick={handleExportCSV}>
-                  <span className="export-icon">📄</span>
+                  <span className="export-icon">
+                    <FileDown size={18} />
+                  </span>
                   <div>
                     <div className="export-title">Export as CSV</div>
                     <div className="export-desc">Download data in CSV format</div>
                   </div>
                 </button>
                 <button className="export-dropdown-item" onClick={handleExportJSON}>
-                  <span className="export-icon">📋</span>
+                  <span className="export-icon">
+                    <FileJson size={18} />
+                  </span>
                   <div>
                     <div className="export-title">Export as JSON</div>
                     <div className="export-desc">Download data in JSON format</div>
                   </div>
                 </button>
                 <button className="export-dropdown-item" onClick={handleCopySQLInserts}>
-                  <span className="export-icon">💾</span>
+                  <span className="export-icon">
+                    <Database size={18} />
+                  </span>
                   <div>
                     <div className="export-title">Copy as SQL INSERT</div>
                     <div className="export-desc">Copy INSERT statements to clipboard</div>
@@ -290,7 +301,8 @@ export function DataBrowser({ apiClient, tableName, apiKey }: DataBrowserProps) 
             )}
           </div>
           <Button variant="success" className="btn-sm" onClick={() => setShowAddModal(true)}>
-            ➕ Add Row
+            <Plus size={14} />
+            <span>Add Row</span>
           </Button>
         </div>
       </div>
@@ -306,11 +318,13 @@ export function DataBrowser({ apiClient, tableName, apiKey }: DataBrowserProps) 
               style="flex: 1; padding: 0.5rem; border: 1px solid var(--border-color); border-radius: 4px; background: var(--bg-secondary); color: var(--text-color);"
             />
             <Button type="submit" variant="primary">
-              🔍 Search
+              <Search size={14} />
+              <span>Search</span>
             </Button>
             {search && (
               <Button type="button" variant="secondary" onClick={handleSearchClear}>
-                ✕ Clear
+                <X size={14} />
+                <span>Clear</span>
               </Button>
             )}
           </div>

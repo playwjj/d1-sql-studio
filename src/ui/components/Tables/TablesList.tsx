@@ -3,6 +3,7 @@ import { ApiClient } from '../../lib/api';
 import { Button } from '../shared';
 import { Alert } from '../shared/Alert';
 import { useNotification } from '../../contexts/NotificationContext';
+import { FileText, Edit3, Trash2, Palette, FileCode } from 'lucide-preact';
 
 interface Table {
   name: string;
@@ -121,10 +122,12 @@ export function TablesList({ apiClient, onTableSelect, onCreateTable, onVisualBu
           <div className="empty-state-subtext">Create your first table to get started</div>
           <div style="display: flex; gap: 12px; justify-content: center;">
             <Button onClick={onVisualBuilder} variant="primary">
-              🎨 Visual Builder
+              <Palette size={16} />
+              <span>Visual Builder</span>
             </Button>
             <Button onClick={onCreateTable} variant="secondary">
-              📝 SQL Editor
+              <FileCode size={16} />
+              <span>SQL Editor</span>
             </Button>
           </div>
         </div>
@@ -138,10 +141,12 @@ export function TablesList({ apiClient, onTableSelect, onCreateTable, onVisualBu
         <h3>Tables ({tables.length})</h3>
         <div style="display: flex; gap: 10px;">
           <Button onClick={onVisualBuilder} variant="primary" className="btn-sm">
-            🎨 Visual Builder
+            <Palette size={14} />
+            <span>Visual Builder</span>
           </Button>
           <Button onClick={onCreateTable} variant="secondary" className="btn-sm">
-            📝 SQL Editor
+            <FileCode size={14} />
+            <span>SQL Editor</span>
           </Button>
         </div>
       </div>
@@ -170,21 +175,24 @@ export function TablesList({ apiClient, onTableSelect, onCreateTable, onVisualBu
                     variant="primary"
                     className="btn-sm"
                   >
-                    📊 Browse Data
+                    <FileText size={14} />
+                    <span>Browse</span>
                   </Button>
                   <Button
                     onClick={() => onEditTable(table.name)}
                     variant="secondary"
                     className="btn-sm"
                   >
-                    ✏️ Edit Structure
+                    <Edit3 size={14} />
+                    <span>Edit</span>
                   </Button>
                   <Button
                     onClick={() => handleDelete(table.name)}
                     variant="danger"
                     className="btn-sm"
                   >
-                    🗑️ Delete
+                    <Trash2 size={14} />
+                    <span>Delete</span>
                   </Button>
                 </div>
               </td>

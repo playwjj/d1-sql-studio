@@ -134,24 +134,28 @@ body {
 
 .form-control {
   width: 100%;
-  padding: 10px 15px;
+  padding: 11px 16px;
   border: 2px solid var(--border);
-  border-radius: 8px;
+  border-radius: 10px;
   font-size: 14px;
-  transition: all 0.2s ease;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   background: var(--card-bg);
   color: var(--text);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
 .form-control:focus {
   outline: none;
   border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.12),
+              0 1px 2px rgba(0, 0, 0, 0.05);
   background: var(--card-bg);
+  transform: translateY(-1px);
 }
 
 .form-control:hover:not(:focus) {
   border-color: #cbd5e1;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.06);
 }
 
 .form-control.error {
@@ -208,13 +212,13 @@ body {
 
 /* Buttons - Refined Design */
 .btn {
-  padding: 11px 24px;
+  padding: 11px 20px;
   border: none;
   border-radius: 10px;
   cursor: pointer;
   font-size: 14px;
   font-weight: 600;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -224,6 +228,7 @@ body {
   letter-spacing: 0.01em;
   line-height: 1;
   white-space: nowrap;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
 /* Shine effect overlay */
@@ -246,14 +251,17 @@ body {
   opacity: 0.5;
   cursor: not-allowed;
   transform: none !important;
+  box-shadow: none !important;
 }
 
 .btn:not(:disabled):hover {
   transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
 }
 
 .btn:not(:disabled):active {
   transform: translateY(0);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1) inset;
 }
 
 /* Primary Button */
@@ -345,9 +353,10 @@ body {
 }
 
 .btn-sm {
-  padding: 8px 16px;
+  padding: 8px 14px;
   font-size: 13px;
   border-radius: 8px;
+  gap: 6px;
 }
 
 .btn-icon {
@@ -430,12 +439,25 @@ body {
 
 .content-header {
   background: var(--card-bg);
-  padding: 20px 30px;
+  padding: 24px 32px;
   border-bottom: 1px solid var(--border);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.content-header h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: -0.02em;
 }
 
 .content-body {
-  padding: 30px;
+  padding: 32px;
+  max-width: 1600px;
+  margin: 0 auto;
 }
 
 /* Tables */
@@ -443,19 +465,21 @@ table {
   width: 100%;
   border-collapse: separate;
   border-spacing: 0;
-  border-radius: 8px;
+  border-radius: 12px;
   overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  border: 1px solid var(--border-light);
 }
 
 th {
-  background: linear-gradient(to bottom, var(--bg), #e2e8f0);
-  padding: 14px 16px;
+  background: linear-gradient(to bottom, #f8fafc, #f1f5f9);
+  padding: 16px 20px;
   text-align: left;
-  font-weight: 600;
+  font-weight: 700;
   font-size: 13px;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: var(--text);
+  letter-spacing: 0.6px;
+  color: var(--text-secondary);
   border-bottom: 2px solid var(--border);
 }
 
@@ -468,14 +492,23 @@ th:last-child {
 }
 
 td {
-  padding: 14px 16px;
-  border-bottom: 1px solid var(--border);
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border-light);
   background: var(--card-bg);
-  transition: background 0.15s ease;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+tbody tr {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+tbody tr:hover {
+  transform: scale(1.01);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 }
 
 tbody tr:hover td {
-  background: var(--hover-bg);
+  background: rgba(129, 140, 248, 0.04);
 }
 
 tbody tr:last-child td:first-child {
@@ -569,8 +602,8 @@ table.data-table .table-actions .btn {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.6);
-  backdrop-filter: blur(4px);
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(8px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -580,13 +613,13 @@ table.data-table .table-actions .btn {
 
 .modal-content {
   background: var(--card-bg);
-  border-radius: 20px;
-  box-shadow: var(--shadow-xl),
-              0 0 0 1px rgba(0, 0, 0, 0.05);
+  border-radius: 24px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25),
+              0 0 0 1px rgba(255, 255, 255, 0.1);
   max-height: 90vh;
   overflow-y: auto;
   animation: slideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  border: 1px solid rgba(226, 232, 240, 0.8);
+  border: 1px solid rgba(226, 232, 240, 0.6);
 }
 
 .modal-small {
@@ -602,16 +635,20 @@ table.data-table .table-actions .btn {
 }
 
 .modal-header {
-  padding: 20px;
-  border-bottom: 1px solid var(--border);
+  padding: 24px 28px;
+  border-bottom: 1px solid var(--border-light);
   display: flex;
   justify-content: space-between;
   align-items: center;
+  background: linear-gradient(to bottom, var(--card-bg), var(--bg));
 }
 
 .modal-header h3 {
   margin: 0;
   color: var(--text);
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
 }
 
 .modal-close {
@@ -633,47 +670,79 @@ table.data-table .table-actions .btn {
 }
 
 .modal-body {
-  padding: 20px;
+  padding: 28px;
 }
 
 .modal-footer {
-  padding: 20px;
-  border-top: 1px solid var(--border);
+  padding: 20px 28px;
+  border-top: 1px solid var(--border-light);
   display: flex;
   justify-content: flex-end;
-  gap: 10px;
+  gap: 12px;
+  background: var(--bg);
 }
 
 /* Sidebar Navigation */
 .sidebar-nav {
   flex: 1;
   overflow-y: auto;
+  padding: 8px;
 }
 
 .nav-item {
-  padding: 12px 20px;
+  padding: 12px 16px;
   display: flex;
   align-items: center;
   gap: 12px;
   cursor: pointer;
-  transition: all 0.2s;
-  color: var(--text);
-  border-left: 3px solid transparent;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  color: var(--text-secondary);
+  border-radius: 10px;
+  margin-bottom: 4px;
+  font-weight: 500;
+  position: relative;
+  overflow: hidden;
+}
+
+.nav-item::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: var(--primary);
+  transform: scaleY(0);
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: 0 2px 2px 0;
 }
 
 .nav-item:hover {
   background: var(--hover-bg);
+  color: var(--text);
 }
 
 .nav-item.active {
-  background: var(--hover-bg);
-  border-left-color: var(--primary);
+  background: linear-gradient(135deg, rgba(129, 140, 248, 0.12), rgba(129, 140, 248, 0.08));
   color: var(--primary);
-  font-weight: 500;
+  font-weight: 600;
+}
+
+.nav-item.active::before {
+  transform: scaleY(1);
 }
 
 .nav-item-icon {
-  font-size: 1.2em;
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+}
+
+.nav-item:hover .nav-item-icon {
+  transform: scale(1.1);
+}
+
+.nav-item.active .nav-item-icon {
+  transform: scale(1.05);
 }
 
 .sidebar-footer {
@@ -895,13 +964,13 @@ table.data-table .table-actions .btn {
 /* Card - Enhanced */
 .card {
   background: var(--card-bg);
-  border-radius: 16px;
-  padding: 28px;
-  box-shadow: var(--shadow),
+  border-radius: 20px;
+  padding: 32px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06),
               0 0 0 1px rgba(0, 0, 0, 0.02);
-  margin-bottom: 24px;
-  border: 1px solid rgba(226, 232, 240, 0.8);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  margin-bottom: 28px;
+  border: 1px solid rgba(226, 232, 240, 0.6);
+  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   overflow: hidden;
 }
@@ -912,14 +981,20 @@ table.data-table .table-actions .btn {
   top: 0;
   left: 0;
   right: 0;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.8), transparent);
-  opacity: 0.5;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(129, 140, 248, 0.3), transparent);
+  opacity: 0;
+  transition: opacity 0.3s ease;
 }
 
 .card:hover {
-  box-shadow: var(--shadow-md),
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08),
               0 0 0 1px rgba(0, 0, 0, 0.03);
+  transform: translateY(-2px);
+}
+
+.card:hover::before {
+  opacity: 1;
 }
 
 .card-header {
@@ -1302,13 +1377,13 @@ pre code {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
+  width: 40px;
+  height: 40px;
   background: linear-gradient(135deg, var(--primary-light), var(--primary));
-  border-radius: 8px;
-  font-size: 18px;
+  border-radius: 10px;
   flex-shrink: 0;
   box-shadow: 0 2px 8px rgba(99, 102, 241, 0.2);
+  color: white;
 }
 
 .export-title {

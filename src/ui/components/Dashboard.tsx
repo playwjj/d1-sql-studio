@@ -4,6 +4,7 @@ import { TablesView } from './Tables';
 import { DataBrowser } from './DataBrowser';
 import { QueryEditor } from './QueryEditor';
 import { ApiKeyManagement } from './ApiKeyManagement';
+import { Database, FileText, Zap, Key, LogOut, Table2 } from 'lucide-preact';
 
 interface DashboardProps {
   apiKey: string;
@@ -25,8 +26,11 @@ export function Dashboard({ apiKey, onLogout }: DashboardProps) {
     <div className="dashboard">
       <div className="sidebar">
         <div className="sidebar-header">
-          <h1 style="font-size: 1.5em; margin-bottom: 4px;">🗄️ D1 SQL Studio</h1>
-          <p style="font-size: 0.9em; margin: 0; opacity: 0.9;">Database Manager</p>
+          <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 4px;">
+            <Database size={28} strokeWidth={2.5} />
+            <h1 style="font-size: 1.5em; margin: 0;">D1 SQL Studio</h1>
+          </div>
+          <p style="font-size: 0.9em; margin: 0; opacity: 0.9;">Database Management Platform</p>
         </div>
 
         <div className="sidebar-nav">
@@ -34,46 +38,47 @@ export function Dashboard({ apiKey, onLogout }: DashboardProps) {
             className={`nav-item ${currentView === 'tables' ? 'active' : ''}`}
             onClick={() => setCurrentView('tables')}
           >
-            <span className="nav-item-icon">📊</span>
+            <Table2 size={20} className="nav-item-icon" />
             <span>Tables</span>
           </div>
           <div
             className={`nav-item ${currentView === 'data' ? 'active' : ''}`}
             onClick={() => setCurrentView('data')}
           >
-            <span className="nav-item-icon">📝</span>
+            <FileText size={20} className="nav-item-icon" />
             <span>Data Browser</span>
           </div>
           <div
             className={`nav-item ${currentView === 'query' ? 'active' : ''}`}
             onClick={() => setCurrentView('query')}
           >
-            <span className="nav-item-icon">⚡</span>
+            <Zap size={20} className="nav-item-icon" />
             <span>SQL Query</span>
           </div>
           <div
             className={`nav-item ${currentView === 'keys' ? 'active' : ''}`}
             onClick={() => setCurrentView('keys')}
           >
-            <span className="nav-item-icon">🔑</span>
+            <Key size={20} className="nav-item-icon" />
             <span>API Keys</span>
           </div>
         </div>
 
         <div className="sidebar-footer">
           <button className="btn btn-secondary btn-block" onClick={onLogout}>
-            🚪 Logout
+            <LogOut size={16} />
+            <span>Logout</span>
           </button>
         </div>
       </div>
 
       <div className="main-content">
         <div className="content-header">
-          <h2>
-            {currentView === 'tables' && '📊 Tables'}
-            {currentView === 'data' && `📝 Data Browser${selectedTable ? ` - ${selectedTable}` : ''}`}
-            {currentView === 'query' && '⚡ SQL Query'}
-            {currentView === 'keys' && '🔑 API Keys'}
+          <h2 style="display: flex; align-items: center; gap: 12px; margin: 0;">
+            {currentView === 'tables' && <><Table2 size={24} /> Tables</>}
+            {currentView === 'data' && <><FileText size={24} /> Data Browser{selectedTable && ` - ${selectedTable}`}</>}
+            {currentView === 'query' && <><Zap size={24} /> SQL Query</>}
+            {currentView === 'keys' && <><Key size={24} /> API Keys</>}
           </h2>
         </div>
 

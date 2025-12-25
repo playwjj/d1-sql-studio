@@ -29,6 +29,7 @@
     "@codemirror/search": "^6.5.11",
     "@codemirror/state": "^6.5.2",
     "@codemirror/view": "^6.38.8",
+    "lucide-preact": "^0.562.0",
     "preact": "^10.19.3",
     "sql-formatter": "^15.6.10"
   },
