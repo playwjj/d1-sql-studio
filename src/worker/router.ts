@@ -145,12 +145,12 @@ export class Router {
 
   private async listTables(): Promise<Response> {
     const tables = await this.dbManager.listTables();
-    return this.jsonResponse({ success: true, data: tables });
+    return this.jsonResponse({ success: true, data: tables }, 200, { cacheable: true });
   }
 
   private async getTableSchema(tableName: string): Promise<Response> {
     const schema = await this.dbManager.getTableSchema(tableName);
-    return this.jsonResponse({ success: true, data: schema });
+    return this.jsonResponse({ success: true, data: schema }, 200, { cacheable: true });
   }
 
   private async executeQuery(request: Request): Promise<Response> {
@@ -224,11 +224,20 @@ export class Router {
     }
 
     const result = await this.dbManager.createTable(body.sql);
+
+    // Invalidate tables cache after creating table
+    this.dbManager.invalidateTablesCache();
+
     return this.jsonResponse({ success: true, data: result });
   }
 
   private async dropTable(tableName: string): Promise<Response> {
     const result = await this.dbManager.dropTable(tableName);
+
+    // Invalidate both schema and tables cache after dropping table
+    this.dbManager.invalidateSchemaCache(tableName);
+    this.dbManager.invalidateTablesCache();
+
     return this.jsonResponse({ success: true, data: result });
   }
 
@@ -325,11 +334,19 @@ export class Router {
     }
 
     const result = await this.dbManager.addColumn(tableName, body.columnName, body.columnType, body.constraints);
+
+    // Invalidate schema cache after modifying table structure
+    this.dbManager.invalidateSchemaCache(tableName);
+
     return this.jsonResponse({ success: true, data: result });
   }
 
   private async dropColumn(tableName: string, columnName: string): Promise<Response> {
     const result = await this.dbManager.dropColumn(tableName, columnName);
+
+    // Invalidate schema cache after modifying table structure
+    this.dbManager.invalidateSchemaCache(tableName);
+
     return this.jsonResponse({ success: true, data: result });
   }
 
@@ -341,6 +358,10 @@ export class Router {
     }
 
     const result = await this.dbManager.renameColumn(tableName, oldColumnName, body.newColumnName);
+
+    // Invalidate schema cache after modifying table structure
+    this.dbManager.invalidateSchemaCache(tableName);
+
     return this.jsonResponse({ success: true, data: result });
   }
 
@@ -355,12 +376,22 @@ export class Router {
     return this.jsonResponse({ success: true, data: result });
   }
 
-  private jsonResponse<T>(data: ApiResponse<T>, status: number = 200): Response {
-    return new Response(safeJsonStringify(data, 2), {
+  private jsonResponse<T>(data: ApiResponse<T>, status: number = 200, options?: { cacheable?: boolean }): Response {
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+
+    // Add cache headers for cacheable responses (e.g., table schema, list tables)
+    if (options?.cacheable) {
+      headers['Cache-Control'] = 'public, max-age=300'; // 5 minutes
+      headers['Vary'] = 'Accept-Encoding';
+    } else {
+      headers['Cache-Control'] = 'no-cache, no-store, must-revalidate';
+    }
+
+    return new Response(safeJsonStringify(data), {  // Removed indentation for smaller payload
       status,
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers,
     });
   }
 }

@@ -1,26 +1,95 @@
 import { Env, TableInfo, ColumnInfo, JoinQueryRequest, JoinConfig } from './types';
 import { validateIdentifier, validateIdentifiers, quoteIdentifier, validateRowData, validatePagination } from './security';
 
+interface SchemaCache {
+  data: ColumnInfo[];
+  timestamp: number;
+}
+
+// Module-level cache - shared across all D1Manager instances within the same Worker isolate
+// This ensures cache persists across requests in Cloudflare Workers
+const globalSchemaCache = new Map<string, SchemaCache>();
+let globalTablesCache: { data: TableInfo[], timestamp: number } | null = null;
+
+const SCHEMA_TTL = 5 * 60 * 1000; // 5 minutes
+const TABLES_TTL = 5 * 60 * 1000; // 5 minutes
+
 export class D1Manager {
   constructor(private db: D1Database) {}
 
-  async listTables(): Promise<TableInfo[]> {
+  async listTables(skipCache = false): Promise<TableInfo[]> {
+    const now = Date.now();
+
+    // Return cached data if valid and not forcing refresh
+    if (!skipCache && globalTablesCache && (now - globalTablesCache.timestamp) < TABLES_TTL) {
+      return globalTablesCache.data;
+    }
+
     const result = await this.db
       .prepare("SELECT name, type FROM sqlite_master WHERE type IN ('table', 'view') AND name NOT LIKE 'sqlite_%' AND name NOT LIKE '_cf_%' ORDER BY name")
       .all<TableInfo>();
 
-    return result.results || [];
+    const tables = result.results || [];
+
+    // Update global cache
+    globalTablesCache = {
+      data: tables,
+      timestamp: now
+    };
+
+    return tables;
   }
 
-  async getTableSchema(tableName: string): Promise<ColumnInfo[]> {
+  async getTableSchema(tableName: string, skipCache = false): Promise<ColumnInfo[]> {
     // Validate table name to prevent SQL injection
     validateIdentifier(tableName, 'table name');
+
+    const cacheKey = tableName;
+    const now = Date.now();
+    const cached = globalSchemaCache.get(cacheKey);
+
+    // Return cached data if valid and not forcing refresh
+    if (!skipCache && cached && (now - cached.timestamp) < SCHEMA_TTL) {
+      return cached.data;
+    }
 
     const result = await this.db
       .prepare(`PRAGMA table_info(${quoteIdentifier(tableName)})`)
       .all<ColumnInfo>();
 
-    return result.results || [];
+    const schema = result.results || [];
+
+    // Update global cache
+    globalSchemaCache.set(cacheKey, {
+      data: schema,
+      timestamp: now
+    });
+
+    return schema;
+  }
+
+  /**
+   * Invalidate schema cache for a specific table
+   * Call this after schema-modifying operations
+   */
+  invalidateSchemaCache(tableName: string) {
+    globalSchemaCache.delete(tableName);
+  }
+
+  /**
+   * Invalidate tables list cache
+   * Call this after creating or dropping tables
+   */
+  invalidateTablesCache() {
+    globalTablesCache = null;
+  }
+
+  /**
+   * Clear all caches
+   */
+  clearAllCaches() {
+    globalSchemaCache.clear();
+    globalTablesCache = null;
   }
 
   async executeQuery(sql: string, params: any[] = []) {

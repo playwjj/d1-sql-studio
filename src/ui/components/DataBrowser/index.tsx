@@ -6,6 +6,7 @@ import { EditRowModal } from './EditRowModal';
 import { ApiDocumentation } from './ApiDocumentation';
 import { useNotification } from '../../contexts/NotificationContext';
 import { exportToCSV, exportToJSON, copySQLInserts } from '../../lib/exportUtils';
+import { useTableSchema } from '../../hooks/useTableSchema';
 
 interface DataBrowserProps {
   apiClient: ApiClient;
@@ -15,6 +16,7 @@ interface DataBrowserProps {
 
 export function DataBrowser({ apiClient, tableName, apiKey }: DataBrowserProps) {
   const { showToast, showConfirm } = useNotification();
+  const { schema } = useTableSchema(apiClient, tableName);
   const [data, setData] = useState<any[]>([]);
   const [columns, setColumns] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
@@ -32,13 +34,31 @@ export function DataBrowser({ apiClient, tableName, apiKey }: DataBrowserProps) 
   const exportMenuRef = useRef<HTMLDivElement>(null);
   const limit = 50;
 
+  // Update columns when schema loads
   useEffect(() => {
-    loadTableSchema();
-  }, [tableName]);
+    if (schema && schema.length > 0) {
+      setColumns(schema.map(col => col.name));
+    }
+  }, [schema]);
 
+  // Reset page when search or sort changes, BEFORE loading data
   useEffect(() => {
+    // Only reset if page is not already 1
+    if (page !== 1) {
+      setPage(1);
+      return; // Don't load data here, let the next effect handle it
+    }
+    // If page is already 1, load data immediately
     loadData();
-  }, [tableName, page, sortBy, sortOrder, search]);
+  }, [tableName, sortBy, sortOrder, search]);
+
+  // Load data when page changes (after reset or manual navigation)
+  useEffect(() => {
+    // Only trigger if page > 1 (page 1 is handled by previous effect)
+    if (page > 1) {
+      loadData();
+    }
+  }, [page]);
 
   // Close export menu when clicking outside
   useEffect(() => {
@@ -56,27 +76,6 @@ export function DataBrowser({ apiClient, tableName, apiKey }: DataBrowserProps) 
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [showExportMenu]);
-
-  useEffect(() => {
-    // Reset page when search or sort changes
-    if (page !== 1) {
-      setPage(1);
-    }
-  }, [search, sortBy, sortOrder]);
-
-  const loadTableSchema = async () => {
-    try {
-      const result = await apiClient.getTableSchema(tableName);
-      if (result.success && result.data && Array.isArray(result.data)) {
-        const schemaColumns = result.data.map((col: any) => col.name);
-        if (schemaColumns.length > 0) {
-          setColumns(schemaColumns);
-        }
-      }
-    } catch (err: any) {
-      console.error('Failed to load table schema:', err);
-    }
-  };
 
   const loadData = async () => {
     setLoading(true);
