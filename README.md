@@ -20,6 +20,8 @@ A modern, lightweight database management tool for Cloudflare D1, built with **P
 - 🌐 **Edge Computing** - Runs on Cloudflare Workers for global performance
 - 📦 **Lightweight** - Only ~10KB gzipped bundle size
 - 🔌 **REST API** - Complete REST API for programmatic access
+- 🔀 **Multi-Field Sorting** - Sort data by multiple columns simultaneously
+- 🔗 **Multi-Table Joins** - Structured JOIN queries with RESTful API
 
 ## 🏗️ Architecture
 
@@ -312,9 +314,10 @@ GET /api/tables/:tableName/rows?page=1&limit=50&sortBy=id&sortOrder=asc&search=k
 
 **Query Parameters:**
 - `page` (optional): Page number (default: 1)
-- `limit` (optional): Rows per page (default: 50)
-- `sortBy` (optional): Column name to sort by
+- `limit` (optional): Rows per page (default: 50, max: 1000)
+- `sortBy` (optional): Column name to sort by (single field)
 - `sortOrder` (optional): Sort direction - `asc` or `desc` (default: asc)
+- `sort` (optional): **Multi-field sort** - Format: `field1:order1,field2:order2`
 - `search` (optional): Search keyword (searches in all TEXT columns)
 
 **Examples:**
@@ -322,15 +325,25 @@ GET /api/tables/:tableName/rows?page=1&limit=50&sortBy=id&sortOrder=asc&search=k
 # Basic pagination
 GET /api/tables/users/rows?page=1&limit=50
 
-# Sort by ID descending
+# Single-field sort: Sort by ID descending
 GET /api/tables/users/rows?sortBy=id&sortOrder=desc
 
-# Sort by name ascending
+# Single-field sort: Sort by name ascending
 GET /api/tables/users/rows?sortBy=name&sortOrder=asc
 
-# Search for "john" and sort by created_at
-GET /api/tables/users/rows?search=john&sortBy=created_at&sortOrder=desc
+# Multi-field sort: Sort by name ascending, then created_at descending
+GET /api/tables/users/rows?sort=name:asc,created_at:desc
+
+# Multi-field sort: Sort by status, priority, and date
+GET /api/tables/tasks/rows?sort=status:asc,priority:desc,due_date:asc
+
+# Search + multi-field sort
+GET /api/tables/users/rows?search=john&sort=last_name:asc,first_name:asc
 ```
+
+**Sort Parameter Priority:**
+- If `sort` is provided, it takes priority (multi-field sorting)
+- Otherwise, `sortBy` + `sortOrder` are used (single-field sorting, backward compatible)
 
 ### Execute SQL Query
 ```bash
@@ -338,10 +351,167 @@ POST /api/query
 Content-Type: application/json
 
 {
-  "sql": "SELECT * FROM users LIMIT 10",
-  "params": []
+  "sql": "SELECT * FROM users WHERE created_at > ? LIMIT ?",
+  "params": ["2024-01-01", 10]
 }
 ```
+
+**Supported SQL Statements:**
+- `SELECT` - Query data (supports JOINs, subqueries, etc.)
+- `INSERT` - Insert new records
+- `UPDATE` - Update existing records
+- `DELETE` - Delete records
+- `PRAGMA` - Database metadata queries
+
+**Security:**
+- ✅ Parameterized queries with `?` placeholders
+- ✅ Multiple statements blocked
+- ✅ SQL comments blocked
+- ❌ DDL operations (DROP, CREATE, ALTER) not allowed via this endpoint
+
+**Examples:**
+```bash
+# Simple SELECT
+POST /api/query
+{"sql": "SELECT * FROM users LIMIT 10"}
+
+# JOIN query
+POST /api/query
+{
+  "sql": "SELECT u.name, o.total FROM users u INNER JOIN orders o ON u.id = o.user_id WHERE o.total > ?",
+  "params": [100]
+}
+
+# Aggregate with GROUP BY
+POST /api/query
+{
+  "sql": "SELECT category, COUNT(*) as count, AVG(price) as avg_price FROM products GROUP BY category"
+}
+
+# Subquery
+POST /api/query
+{
+  "sql": "SELECT * FROM users WHERE id IN (SELECT user_id FROM orders WHERE total > ?)",
+  "params": [500]
+}
+```
+
+### Multi-Table Join Query (NEW)
+
+Structured, RESTful approach for multi-table JOINs:
+
+```bash
+POST /api/join
+Content-Type: application/json
+
+{
+  "baseTable": "users",
+  "joins": [
+    {
+      "table": "orders",
+      "type": "LEFT",
+      "on": "users.id = orders.user_id"
+    }
+  ],
+  "select": ["users.*", "COUNT(orders.id) as order_count"],
+  "where": "users.created_at > ?",
+  "groupBy": ["users.id"],
+  "orderBy": "order_count DESC",
+  "limit": 20,
+  "params": ["2024-01-01"]
+}
+```
+
+**Request Parameters:**
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `baseTable` | string | ✅ | Base table name |
+| `joins` | JoinConfig[] | ✅ | Array of JOIN configurations (1-10 joins) |
+| `select` | string[] | ❌ | Columns to select (default: `["*"]`, max: 50) |
+| `where` | string | ❌ | WHERE clause with `?` placeholders |
+| `groupBy` | string[] | ❌ | GROUP BY columns (max: 20) |
+| `having` | string | ❌ | HAVING clause |
+| `orderBy` | string | ❌ | ORDER BY clause (e.g., `"created_at DESC"`) |
+| `limit` | number | ❌ | Max records to return (max: 1000) |
+| `offset` | number | ❌ | Offset for pagination |
+| `params` | any[] | ❌ | Parameter values for WHERE/HAVING |
+
+**JoinConfig Object:**
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `table` | string | ✅ | Table name to join |
+| `type` | 'INNER' \| 'LEFT' \| 'RIGHT' \| 'CROSS' | ✅ | Join type |
+| `on` | string | ❌ | Join condition (required except for CROSS JOIN) |
+
+**Examples:**
+
+**1. Basic INNER JOIN:**
+```json
+{
+  "baseTable": "users",
+  "joins": [
+    {"table": "orders", "type": "INNER", "on": "users.id = orders.user_id"}
+  ],
+  "select": ["users.name", "orders.total", "orders.order_date"],
+  "where": "orders.total > ?",
+  "orderBy": "orders.order_date DESC",
+  "limit": 50,
+  "params": [100]
+}
+```
+
+**2. Multiple LEFT JOINs with Aggregation:**
+```json
+{
+  "baseTable": "users",
+  "joins": [
+    {"table": "orders", "type": "LEFT", "on": "users.id = orders.user_id"},
+    {"table": "addresses", "type": "LEFT", "on": "users.id = addresses.user_id"}
+  ],
+  "select": [
+    "users.id",
+    "users.name",
+    "COUNT(orders.id) as order_count",
+    "SUM(orders.total) as total_spent",
+    "addresses.city"
+  ],
+  "groupBy": ["users.id", "users.name", "addresses.city"],
+  "having": "COUNT(orders.id) > ?",
+  "orderBy": "total_spent DESC",
+  "limit": 20,
+  "params": [5]
+}
+```
+
+**3. Product Catalog with Categories:**
+```json
+{
+  "baseTable": "products",
+  "joins": [
+    {"table": "categories", "type": "INNER", "on": "products.category_id = categories.id"}
+  ],
+  "select": [
+    "products.*",
+    "categories.name as category_name"
+  ],
+  "where": "products.stock > ? AND products.active = ?",
+  "orderBy": "products.created_at DESC",
+  "params": [0, true]
+}
+```
+
+**Security Features:**
+- ✅ All table and column names validated
+- ✅ Automatic SQL identifier quoting
+- ✅ Dangerous characters blocked (`;`, `--`, `/*`, `*/`)
+- ✅ Parameterized WHERE/HAVING clauses
+- ✅ Limits on joins (max 10), columns (max 50), and results (max 1000)
+
+**When to Use:**
+- Use `/api/join` for **structured, common JOIN patterns**
+- Use `/api/query` for **complex queries** (subqueries, CTEs, window functions, etc.)
 
 ### Create Table
 ```bash

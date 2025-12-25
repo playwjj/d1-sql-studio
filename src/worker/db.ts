@@ -1,4 +1,4 @@
-import { Env, TableInfo, ColumnInfo } from './types';
+import { Env, TableInfo, ColumnInfo, JoinQueryRequest, JoinConfig } from './types';
 import { validateIdentifier, validateIdentifiers, quoteIdentifier, validateRowData, validatePagination } from './security';
 
 export class D1Manager {
@@ -41,7 +41,8 @@ export class D1Manager {
     limit: number = 50,
     sortBy?: string,
     sortOrder: 'asc' | 'desc' = 'asc',
-    search?: string
+    search?: string,
+    sort?: string  // Multi-field sort parameter, format: 'name:asc,created_at:desc'
   ) {
     // Validate table name to prevent SQL injection
     validateIdentifier(tableName, 'table name');
@@ -77,9 +78,44 @@ export class D1Manager {
       }
     }
 
-    // Build ORDER BY clause
+    // Build ORDER BY clause - supports multi-field sorting
     let orderByClause = '';
-    if (sortBy) {
+
+    // Prioritize 'sort' parameter (multi-field sorting)
+    if (sort && sort.trim()) {
+      // Parse sort parameter: 'name:asc,created_at:desc'
+      const sortFields = sort.split(',').map(s => s.trim()).filter(s => s);
+      const orderByClauses: string[] = [];
+
+      for (const sortField of sortFields) {
+        const parts = sortField.split(':');
+        if (parts.length !== 2) {
+          throw new Error(`Invalid sort format: ${sortField}. Expected format: field:order`);
+        }
+
+        const [field, order] = parts;
+        const trimmedField = field.trim();
+        const trimmedOrder = order.trim().toLowerCase();
+
+        // Validate field name
+        validateIdentifier(trimmedField, 'sort column');
+
+        // Validate sort order
+        if (trimmedOrder !== 'asc' && trimmedOrder !== 'desc') {
+          throw new Error(`Invalid sort order: ${order}. Must be 'asc' or 'desc'`);
+        }
+
+        const quotedField = quoteIdentifier(trimmedField);
+        const direction = trimmedOrder === 'desc' ? 'DESC' : 'ASC';
+        orderByClauses.push(`${quotedField} ${direction}`);
+      }
+
+      if (orderByClauses.length > 0) {
+        orderByClause = ` ORDER BY ${orderByClauses.join(', ')}`;
+      }
+    }
+    // Fallback to single-field sorting (backward compatibility)
+    else if (sortBy) {
       validateIdentifier(sortBy, 'sort column');
       const quotedSortColumn = quoteIdentifier(sortBy);
       const direction = sortOrder.toLowerCase() === 'desc' ? 'DESC' : 'ASC';
@@ -308,5 +344,180 @@ export class D1Manager {
 
     const sql = `ALTER TABLE ${quotedOldTable} RENAME TO ${quotedNewTable}`;
     return await this.db.prepare(sql).run();
+  }
+
+  /**
+   * Execute a multi-table JOIN query with structured parameters
+   * Provides a safe, RESTful way to perform complex queries
+   *
+   * @param request - Join query configuration
+   * @returns Query results
+   */
+  async executeJoinQuery(request: JoinQueryRequest) {
+    // Validate base table
+    validateIdentifier(request.baseTable, 'base table');
+
+    // Validate joins
+    if (!request.joins || !Array.isArray(request.joins) || request.joins.length === 0) {
+      throw new Error('At least one join must be specified');
+    }
+
+    if (request.joins.length > 10) {
+      throw new Error('Too many joins (maximum 10)');
+    }
+
+    // Build SELECT clause
+    let selectClause = '*';
+    if (request.select && request.select.length > 0) {
+      if (request.select.length > 50) {
+        throw new Error('Too many columns selected (maximum 50)');
+      }
+
+      // Validate and quote each column/expression
+      const validatedColumns = request.select.map(col => {
+        const trimmed = col.trim();
+
+        // Allow wildcard and table.* patterns
+        if (trimmed === '*' || /^[a-zA-Z_][a-zA-Z0-9_]*\.\*$/.test(trimmed)) {
+          return trimmed;
+        }
+
+        // Allow aggregate functions and aliases: COUNT(x) as count, table.column
+        // For complex expressions, we'll validate the identifiers within them
+        if (/\s+as\s+/i.test(trimmed)) {
+          const parts = trimmed.split(/\s+as\s+/i);
+          if (parts.length === 2) {
+            validateIdentifier(parts[1].trim(), 'column alias');
+            return trimmed;
+          }
+        }
+
+        // Allow function calls like COUNT(*), SUM(column), etc.
+        if (/^[A-Z_]+\(/.test(trimmed.toUpperCase())) {
+          return trimmed;
+        }
+
+        // For simple column references (table.column or column)
+        if (/^[a-zA-Z_][a-zA-Z0-9_]*\.[a-zA-Z_][a-zA-Z0-9_]*$/.test(trimmed)) {
+          const [table, column] = trimmed.split('.');
+          validateIdentifier(table, 'table name');
+          validateIdentifier(column, 'column name');
+          return `${quoteIdentifier(table)}.${quoteIdentifier(column)}`;
+        }
+
+        // Simple column name
+        validateIdentifier(trimmed, 'column name');
+        return quoteIdentifier(trimmed);
+      });
+
+      selectClause = validatedColumns.join(', ');
+    }
+
+    // Build FROM clause with base table
+    const quotedBaseTable = quoteIdentifier(request.baseTable);
+    let fromClause = quotedBaseTable;
+
+    // Build JOIN clauses
+    for (const join of request.joins) {
+      validateIdentifier(join.table, 'join table');
+
+      const validJoinTypes = ['INNER', 'LEFT', 'RIGHT', 'CROSS'];
+      if (!validJoinTypes.includes(join.type)) {
+        throw new Error(`Invalid join type: ${join.type}. Must be one of: ${validJoinTypes.join(', ')}`);
+      }
+
+      const quotedJoinTable = quoteIdentifier(join.table);
+
+      if (join.type === 'CROSS') {
+        fromClause += ` CROSS JOIN ${quotedJoinTable}`;
+      } else {
+        if (!join.on) {
+          throw new Error(`JOIN condition (on) is required for ${join.type} JOIN`);
+        }
+
+        // Validate ON clause contains valid identifiers
+        // Simple validation: check that it doesn't contain dangerous patterns
+        if (/;|--|\/\*|\*\//.test(join.on)) {
+          throw new Error('Invalid characters in JOIN condition');
+        }
+
+        fromClause += ` ${join.type} JOIN ${quotedJoinTable} ON ${join.on}`;
+      }
+    }
+
+    // Build WHERE clause
+    let whereClause = '';
+    if (request.where && request.where.trim()) {
+      // Simple validation for WHERE clause
+      if (/;|--|\/\*|\*\//.test(request.where)) {
+        throw new Error('Invalid characters in WHERE clause');
+      }
+      whereClause = ` WHERE ${request.where}`;
+    }
+
+    // Build GROUP BY clause
+    let groupByClause = '';
+    if (request.groupBy && request.groupBy.length > 0) {
+      if (request.groupBy.length > 20) {
+        throw new Error('Too many GROUP BY columns (maximum 20)');
+      }
+
+      const validatedGroupBy = request.groupBy.map(col => {
+        const trimmed = col.trim();
+        // Support table.column format
+        if (/^[a-zA-Z_][a-zA-Z0-9_]*\.[a-zA-Z_][a-zA-Z0-9_]*$/.test(trimmed)) {
+          const [table, column] = trimmed.split('.');
+          validateIdentifier(table, 'table name');
+          validateIdentifier(column, 'column name');
+          return `${quoteIdentifier(table)}.${quoteIdentifier(column)}`;
+        }
+        validateIdentifier(trimmed, 'GROUP BY column');
+        return quoteIdentifier(trimmed);
+      });
+
+      groupByClause = ` GROUP BY ${validatedGroupBy.join(', ')}`;
+    }
+
+    // Build HAVING clause
+    let havingClause = '';
+    if (request.having && request.having.trim()) {
+      if (/;|--|\/\*|\*\//.test(request.having)) {
+        throw new Error('Invalid characters in HAVING clause');
+      }
+      havingClause = ` HAVING ${request.having}`;
+    }
+
+    // Build ORDER BY clause
+    let orderByClause = '';
+    if (request.orderBy && request.orderBy.trim()) {
+      if (/;|--|\/\*|\*\//.test(request.orderBy)) {
+        throw new Error('Invalid characters in ORDER BY clause');
+      }
+      orderByClause = ` ORDER BY ${request.orderBy}`;
+    }
+
+    // Build LIMIT and OFFSET
+    let limitClause = '';
+    if (request.limit !== undefined) {
+      const validatedLimit = Math.min(1000, Math.max(1, Math.floor(request.limit)));
+      limitClause = ` LIMIT ${validatedLimit}`;
+
+      if (request.offset !== undefined) {
+        const validatedOffset = Math.max(0, Math.floor(request.offset));
+        limitClause += ` OFFSET ${validatedOffset}`;
+      }
+    }
+
+    // Construct final SQL
+    const sql = `SELECT ${selectClause} FROM ${fromClause}${whereClause}${groupByClause}${havingClause}${orderByClause}${limitClause}`;
+
+    // Execute query with parameters
+    const params = request.params || [];
+
+    if (params.length > 0) {
+      return await this.db.prepare(sql).bind(...params).all();
+    }
+
+    return await this.db.prepare(sql).all();
   }
 }

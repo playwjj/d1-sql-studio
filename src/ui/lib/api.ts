@@ -10,6 +10,25 @@ export interface ApiResponse<T = any> {
   };
 }
 
+export interface JoinConfig {
+  table: string;
+  type: 'INNER' | 'LEFT' | 'RIGHT' | 'CROSS';
+  on?: string;  // Join condition, e.g., "users.id = orders.user_id"
+}
+
+export interface JoinQueryRequest {
+  baseTable: string;
+  joins: JoinConfig[];
+  select?: string[];  // Columns to select, defaults to ["*"]
+  where?: string;     // WHERE clause
+  groupBy?: string[]; // GROUP BY columns
+  having?: string;    // HAVING clause
+  orderBy?: string;   // ORDER BY clause, e.g., "created_at DESC"
+  limit?: number;
+  offset?: number;
+  params?: any[];     // Parameters for WHERE/HAVING conditions
+}
+
 export class ApiClient {
   constructor(private apiKey: string) {}
 
@@ -43,12 +62,20 @@ export class ApiClient {
     limit = 50,
     sortBy?: string,
     sortOrder: 'asc' | 'desc' = 'asc',
-    search?: string
+    search?: string,
+    sort?: string  // Multi-field sort parameter, format: 'name:asc,created_at:desc'
   ) {
     let url = `/tables/${tableName}/rows?page=${page}&limit=${limit}`;
-    if (sortBy) {
+
+    // Prioritize 'sort' parameter (multi-field sorting)
+    if (sort) {
+      url += `&sort=${encodeURIComponent(sort)}`;
+    }
+    // Fallback to single-field sorting (backward compatibility)
+    else if (sortBy) {
       url += `&sortBy=${encodeURIComponent(sortBy)}&sortOrder=${sortOrder}`;
     }
+
     if (search) {
       url += `&search=${encodeURIComponent(search)}`;
     }
@@ -59,6 +86,13 @@ export class ApiClient {
     return this.request('/query', {
       method: 'POST',
       body: JSON.stringify({ sql, params }),
+    });
+  }
+
+  async joinQuery(joinRequest: JoinQueryRequest) {
+    return this.request('/join', {
+      method: 'POST',
+      body: JSON.stringify(joinRequest),
     });
   }
 

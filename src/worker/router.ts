@@ -1,4 +1,4 @@
-import { Env, ApiResponse } from './types';
+import { Env, ApiResponse, JoinQueryRequest } from './types';
 import { D1Manager } from './db';
 import { createApiKey, listApiKeys, deleteApiKey, hasAnyApiKeys } from './apikeys';
 import { validateSQLStatement } from './security';
@@ -53,6 +53,10 @@ export class Router {
         return await this.executeQuery(request);
       }
 
+      if (method === 'POST' && path === '/api/join') {
+        return await this.executeJoinQuery(request);
+      }
+
       if (method === 'POST' && path === '/api/tables') {
         return await this.createTable(request);
       }
@@ -78,7 +82,8 @@ export class Router {
         const sortBy = url.searchParams.get('sortBy') || undefined;
         const sortOrder = (url.searchParams.get('sortOrder') || 'asc') as 'asc' | 'desc';
         const search = url.searchParams.get('search') || undefined;
-        return await this.getTableData(tableName, page, limit, sortBy, sortOrder, search);
+        const sort = url.searchParams.get('sort') || undefined;  // Multi-field sort parameter
+        return await this.getTableData(tableName, page, limit, sortBy, sortOrder, search, sort);
       }
 
       if (method === 'GET' && path.match(/^\/api\/tables\/[^/]+\/rows\/[^/]+$/)) {
@@ -159,6 +164,14 @@ export class Router {
     return this.jsonResponse({ success: true, data: result });
   }
 
+  private async executeJoinQuery(request: Request): Promise<Response> {
+    const body = await request.json<JoinQueryRequest>();
+
+    // Execute the structured join query
+    const result = await this.dbManager.executeJoinQuery(body);
+    return this.jsonResponse({ success: true, data: result });
+  }
+
   private async createTable(request: Request): Promise<Response> {
     const body = await request.json<{ sql: string }>();
 
@@ -225,9 +238,10 @@ export class Router {
     limit: number,
     sortBy?: string,
     sortOrder: 'asc' | 'desc' = 'asc',
-    search?: string
+    search?: string,
+    sort?: string
   ): Promise<Response> {
-    const result = await this.dbManager.getTableData(tableName, page, limit, sortBy, sortOrder, search);
+    const result = await this.dbManager.getTableData(tableName, page, limit, sortBy, sortOrder, search, sort);
     return this.jsonResponse({
       success: true,
       data: result.data,
