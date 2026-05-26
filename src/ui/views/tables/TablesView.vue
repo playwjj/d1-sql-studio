@@ -4,6 +4,9 @@
       <div class="view-title">
         <Table2 :size="18" />
         <h2>Tables</h2>
+        <NText depth="3" style="font-size: 13px; font-weight: 400">
+          {{ tablesStore.tableList.length }} tables
+        </NText>
       </div>
       <NSpace>
         <NButton secondary @click="showVisualBuilder = true">
@@ -24,15 +27,24 @@
 
       <NAlert v-else-if="error && !dbNotBound" type="error" :title="error" style="margin-bottom: 16px" />
 
-      <NDataTable
-        v-else
-        :columns="columns"
-        :data="tablesStore.tableList"
-        :pagination="false"
-        :bordered="false"
-        size="small"
-        striped
-      />
+      <template v-else>
+        <NDataTable
+          :columns="columns"
+          :data="tablesStore.tableList"
+          :pagination="false"
+          :bordered="false"
+          :single-line="false"
+          size="small"
+          class="tables-table"
+        />
+        <NEmpty
+          v-if="!loading && tablesStore.tableList.length === 0"
+          description="No tables yet — create one to get started"
+          style="margin: 48px auto"
+        >
+          <template #icon><Table2 :size="40" /></template>
+        </NEmpty>
+      </template>
     </NSpin>
 
     <CreateTableModal v-model:show="showCreateModal" @success="onSuccess" />
@@ -47,12 +59,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, h, onMounted } from 'vue';
+import { ref, watch, h, onMounted } from 'vue';
 import {
-  NDataTable, NButton, NSpace, NSpin, NAlert, NText,
+  NDataTable, NButton, NSpace, NSpin, NAlert, NText, NEmpty, NTooltip,
   type DataTableColumns,
 } from 'naive-ui';
-import { Table2, Plus, Wand2, Pencil, Trash2 } from '@lucide/vue';
+import { Table2, Plus, Wand2, Search, Pencil, Trash2 } from '@lucide/vue';
 import { useAuthStore } from '@/stores/auth';
 import { useTablesStore } from '@/stores/tables';
 import { useNotificationStore } from '@/stores/notification';
@@ -73,26 +85,53 @@ const showVisualBuilder = ref(false);
 const showEditModal = ref(false);
 const editingTable = ref('');
 
-const columns = computed<DataTableColumns<TableInfo>>(() => [
-  { title: 'Name', key: 'name', sorter: 'default' },
-  { title: 'Type', key: 'type', width: 100, render: (row) => row.type ?? 'table' },
+const columns: DataTableColumns<TableInfo> = [
   {
-    title: 'Actions',
-    key: 'actions',
-    width: 160,
-    render: (row) => h(NSpace, { size: 'small' }, {
-      default: () => [
-        h(NButton, { size: 'small', onClick: () => handleBrowse(row.name) }, { default: () => 'Browse' }),
-        h(NButton, { size: 'small', onClick: () => handleEdit(row.name) }, {
-          icon: () => h(Pencil, { size: 13 }),
-        }),
-        h(NButton, { size: 'small', type: 'error', onClick: () => handleDelete(row.name) }, {
-          icon: () => h(Trash2, { size: 13 }),
-        }),
-      ],
-    }),
+    title: 'Name',
+    key: 'name',
+    sorter: 'default',
+    render: (row) =>
+      h('div', { class: 'table-name-cell' }, [
+        h(Table2, { size: 14, class: 'table-icon' }),
+        h('span', { class: 'table-name-text' }, row.name),
+      ]),
   },
-]);
+  {
+    title: '',
+    key: 'actions',
+    width: 190,
+    align: 'right',
+    render: (row) =>
+      h('div', { class: 'actions-cell' }, [
+        h(NTooltip, { trigger: 'hover' }, {
+          trigger: () => h(NButton, {
+            size: 'small',
+            type: 'primary',
+            ghost: true,
+            onClick: () => handleBrowse(row.name),
+          }, { icon: () => h(Search, { size: 13 }), default: () => 'Browse' }),
+          default: () => 'Open in Data Browser',
+        }),
+        h(NTooltip, { trigger: 'hover' }, {
+          trigger: () => h(NButton, {
+            size: 'small',
+            secondary: true,
+            onClick: () => handleEdit(row.name),
+          }, { icon: () => h(Pencil, { size: 13 }) }),
+          default: () => 'Edit structure',
+        }),
+        h(NTooltip, { trigger: 'hover' }, {
+          trigger: () => h(NButton, {
+            size: 'small',
+            type: 'error',
+            ghost: true,
+            onClick: () => handleDelete(row.name),
+          }, { icon: () => h(Trash2, { size: 13 }) }),
+          default: () => 'Drop table',
+        }),
+      ]),
+  },
+];
 
 async function loadTables() {
   loading.value = true;
@@ -116,7 +155,6 @@ async function loadTables() {
 
 function handleBrowse(name: string) {
   tablesStore.selectTable(name);
-  // navigate handled by router in DashboardLayout via store
   import('@/router').then(m => m.default.push({ name: 'data' }));
 }
 
@@ -127,22 +165,22 @@ function handleEdit(name: string) {
 
 async function handleDelete(name: string) {
   const ok = await notif.showConfirm({
-    title: `Delete "${name}"?`,
-    content: 'This will permanently delete the table and all its data.',
+    title: `Drop table "${name}"?`,
+    content: 'This will permanently delete the table and all its data. This cannot be undone.',
     type: 'warning',
-    positiveText: 'Delete',
+    positiveText: 'Drop',
   });
   if (!ok) return;
   try {
     const res = await authStore.apiClient.deleteTable(name);
     if (res.success !== false) {
-      notif.showToast({ message: `Table "${name}" deleted`, type: 'success' });
+      notif.showToast({ message: `Table "${name}" dropped`, type: 'success' });
       await loadTables();
     } else {
-      notif.showToast({ message: res.error ?? 'Delete failed', type: 'error' });
+      notif.showToast({ message: res.error ?? 'Failed to drop table', type: 'error' });
     }
   } catch {
-    notif.showToast({ message: 'Delete failed', type: 'error' });
+    notif.showToast({ message: 'Failed to drop table', type: 'error' });
   }
 }
 
@@ -151,7 +189,6 @@ function onSuccess() {
 }
 
 watch(() => tablesStore.refreshKey, () => loadTables());
-
 onMounted(loadTables);
 </script>
 
@@ -177,5 +214,38 @@ onMounted(loadTables);
   margin: 0;
   font-size: 18px;
   font-weight: 600;
+}
+
+/* Table cell styles — pierce Naive UI shadow DOM with :deep() */
+:deep(.table-name-cell) {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 2px 0;
+}
+
+:deep(.table-icon) {
+  color: #aaa;
+  flex-shrink: 0;
+}
+
+:deep(.table-name-text) {
+  font-family: 'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
+  font-size: 13px;
+  color: #222;
+}
+
+:deep(.actions-cell) {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+/* Compact row height */
+:deep(.tables-table .n-data-table-td) {
+  padding-top: 8px;
+  padding-bottom: 8px;
 }
 </style>
