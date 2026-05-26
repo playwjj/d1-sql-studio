@@ -7,7 +7,7 @@
       bordered
       show-trigger="arrow-circle"
       :native-scrollbar="false"
-      style="display: flex; flex-direction: column; overflow: hidden"
+      style="display: flex; flex-direction: column"
     >
       <!-- Header -->
       <div v-show="!siderCollapsed" class="sidebar-header">
