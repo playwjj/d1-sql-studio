@@ -1,21 +1,23 @@
 <template>
   <NLayout has-sider style="height: 100vh">
     <NLayoutSider
+      v-model:collapsed="siderCollapsed"
       :width="220"
       :collapsed-width="0"
       bordered
       show-trigger="arrow-circle"
       :native-scrollbar="false"
-      style="display: flex; flex-direction: column"
+      style="display: flex; flex-direction: column; overflow: hidden"
     >
       <!-- Header -->
-      <div class="sidebar-header">
+      <div v-show="!siderCollapsed" class="sidebar-header">
         <Database :size="18" color="#18a058" />
         <span class="sidebar-title">D1 SQL Studio</span>
       </div>
 
       <!-- Navigation menu -->
       <NMenu
+        v-show="!siderCollapsed"
         :value="currentRoute"
         :options="menuOptions"
         :indent="18"
@@ -23,34 +25,36 @@
       />
 
       <!-- Table list -->
-      <NDivider style="margin: 8px 0" />
-      <div class="sidebar-section-label">Tables</div>
-      <div class="sidebar-search">
-        <NInput
-          v-model:value="tableFilter"
-          placeholder="Filter tables…"
-          size="small"
-          clearable
-        >
-          <template #prefix><Search :size="12" color="#8890a6" /></template>
-        </NInput>
-      </div>
-      <NSpin v-if="tablesStore.loading" size="small" style="margin: 12px auto; display: block" />
-      <template v-else>
-        <NMenu
-          v-if="filteredTableOptions.length > 0"
-          :value="tablesStore.selectedTable"
-          :options="filteredTableOptions"
-          :indent="18"
-          @update:value="handleTableSelect"
-        />
-        <div v-else-if="tableFilter" class="sidebar-no-match">No match</div>
+      <template v-if="!siderCollapsed">
+        <NDivider style="margin: 8px 0" />
+        <div class="sidebar-section-label">Tables</div>
+        <div class="sidebar-search">
+          <NInput
+            v-model:value="tableFilter"
+            placeholder="Filter tables…"
+            size="small"
+            clearable
+          >
+            <template #prefix><Search :size="12" color="#8890a6" /></template>
+          </NInput>
+        </div>
+        <NSpin v-if="tablesStore.loading" size="small" style="margin: 12px auto; display: block" />
+        <template v-else>
+          <NMenu
+            v-if="filteredTableOptions.length > 0"
+            :value="tablesStore.selectedTable"
+            :options="filteredTableOptions"
+            :indent="18"
+            @update:value="handleTableSelect"
+          />
+          <div v-else-if="tableFilter" class="sidebar-no-match">No match</div>
+        </template>
       </template>
 
       <div style="flex: 1" />
 
       <!-- Footer -->
-      <div class="sidebar-footer">
+      <div v-show="!siderCollapsed" class="sidebar-footer">
         <NButton text size="small" @click="authStore.logout()">
           <template #icon><LogOut :size="14" /></template>
           Sign Out
@@ -88,6 +92,7 @@ const menuOptions: MenuOption[] = [
   { label: 'API Keys',  key: 'keys',   icon: () => h(Key,    { size: 15 }) },
 ];
 
+const siderCollapsed = ref(false);
 const tableFilter = ref('');
 
 const filteredTableOptions = computed<MenuOption[]>(() => {
