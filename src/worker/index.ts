@@ -71,8 +71,10 @@ export default {
       }
     }
 
-    // Serve static assets using Workers Assets
-    // Assets automatically handles static files and client-side routing
-    return env.ASSETS.fetch(request);
+    // Serve static assets; for SPA history-mode routes (no file extension) fall back to index.html
+    if (/\.[^./]+$/.test(url.pathname)) {
+      return env.ASSETS.fetch(request);
+    }
+    return env.ASSETS.fetch(new Request(new URL('/', request.url).toString(), request));
   },
 };
