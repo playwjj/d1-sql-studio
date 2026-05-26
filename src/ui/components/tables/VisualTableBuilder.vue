@@ -1,66 +1,51 @@
 <template>
-  <NModal v-model:show="show" title="Visual Table Builder" preset="card" style="width: 780px">
-    <div style="display: flex; gap: 16px">
-      <!-- Left: Config -->
-      <div style="flex: 1">
-        <NFormItem label="Table Name" :show-feedback="!!tableNameError">
+  <NModal v-model:show="show" title="Visual Table Builder" preset="card" style="width: 820px">
+    <div class="vb-layout">
+      <!-- Left: Column Editor -->
+      <div class="vb-editor">
+        <NFormItem label="Table Name" :show-feedback="!!tableNameError" style="margin-bottom: 16px">
           <NInput v-model:value="tableName" placeholder="my_table" @blur="validateTableName" />
           <template #feedback>{{ tableNameError }}</template>
         </NFormItem>
 
-        <NDivider />
+        <div class="vb-section-label">Columns</div>
 
-        <div v-for="(field, idx) in fields" :key="field.id" class="field-row">
-          <NInput v-model:value="field.name" placeholder="column_name" size="small" style="width: 130px" />
-          <NSelect
-            v-model:value="field.type"
-            :options="typeOptions"
-            size="small"
-            style="width: 120px"
-            @update:value="(v) => onTypeChange(idx, v)"
-          />
-          <NSpace size="small" align="center">
-            <NTooltip trigger="hover">
-              <template #trigger>
-                <NCheckbox v-model:checked="field.isPrimaryKey" @update:checked="(v) => onPKChange(idx, v)">PK</NCheckbox>
-              </template>
-              Primary Key
-            </NTooltip>
-            <NTooltip trigger="hover">
-              <template #trigger>
-                <NCheckbox v-model:checked="field.autoIncrement" :disabled="!field.isPrimaryKey || field.type !== 'INTEGER'">AI</NCheckbox>
-              </template>
-              Auto Increment (INTEGER PK only)
-            </NTooltip>
-            <NTooltip trigger="hover">
-              <template #trigger>
-                <NCheckbox v-model:checked="field.notNull">NN</NCheckbox>
-              </template>
-              Not Null
-            </NTooltip>
-            <NTooltip trigger="hover">
-              <template #trigger>
-                <NCheckbox v-model:checked="field.unique">UQ</NCheckbox>
-              </template>
-              Unique
-            </NTooltip>
-          </NSpace>
-          <NInput v-model:value="field.defaultValue" placeholder="default" size="small" style="width: 80px" />
+        <!-- Header row -->
+        <div class="col-grid col-header">
+          <span class="ch-left">Name</span>
+          <span class="ch-left">Type</span>
+          <NTooltip trigger="hover"><template #trigger><span class="ch-tag">PK</span></template>Primary Key</NTooltip>
+          <NTooltip trigger="hover"><template #trigger><span class="ch-tag">AI</span></template>Auto Increment (INTEGER only)</NTooltip>
+          <NTooltip trigger="hover"><template #trigger><span class="ch-tag">NN</span></template>Not Null</NTooltip>
+          <NTooltip trigger="hover"><template #trigger><span class="ch-tag">UQ</span></template>Unique</NTooltip>
+          <span class="ch-left">Default</span>
+          <span></span>
+        </div>
+
+        <!-- Field rows -->
+        <div v-for="(field, idx) in fields" :key="field.id" class="col-grid col-row">
+          <NInput v-model:value="field.name" placeholder="column_name" size="small" />
+          <NSelect v-model:value="field.type" :options="typeOptions" size="small" @update:value="(v) => onTypeChange(idx, v)" />
+          <div class="check-cell"><NCheckbox v-model:checked="field.isPrimaryKey" @update:checked="(v) => onPKChange(idx, v)" /></div>
+          <div class="check-cell"><NCheckbox v-model:checked="field.autoIncrement" :disabled="!field.isPrimaryKey || field.type !== 'INTEGER'" /></div>
+          <div class="check-cell"><NCheckbox v-model:checked="field.notNull" /></div>
+          <div class="check-cell"><NCheckbox v-model:checked="field.unique" /></div>
+          <NInput v-model:value="field.defaultValue" placeholder="—" size="small" />
           <NButton text type="error" size="small" :disabled="fields.length <= 1" @click="removeField(idx)">
-            <template #icon><Trash2 :size="13" /></template>
+            <template #icon><Trash2 :size="12" /></template>
           </NButton>
         </div>
 
-        <NButton dashed block style="margin-top: 8px" @click="addField">
+        <NButton dashed block size="small" style="margin-top: 8px" @click="addField">
           <template #icon><Plus :size="13" /></template>
           Add Column
         </NButton>
       </div>
 
       <!-- Right: SQL Preview -->
-      <div style="flex: 1">
-        <div class="sql-preview-label">SQL Preview</div>
-        <NCode :code="generatedSQL" language="sql" style="font-size: 12px; max-height: 400px; overflow: auto" />
+      <div class="vb-preview">
+        <div class="vb-section-label">SQL Preview</div>
+        <NCode :code="generatedSQL" language="sql" style="font-size: 12px; max-height: 380px; overflow: auto" />
       </div>
     </div>
 
@@ -78,7 +63,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import {
-  NModal, NFormItem, NInput, NSelect, NCheckbox, NCode, NDivider,
+  NModal, NFormItem, NInput, NSelect, NCheckbox, NCode,
   NButton, NSpace, NAlert, NTooltip, type SelectOption,
 } from 'naive-ui';
 import { Plus, Trash2 } from '@lucide/vue';
@@ -202,20 +187,70 @@ async function handleCreate() {
 </script>
 
 <style scoped>
-.field-row {
+.vb-layout {
   display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-bottom: 8px;
-  flex-wrap: nowrap;
+  gap: 24px;
+  align-items: flex-start;
 }
 
-.sql-preview-label {
-  font-size: 12px;
+.vb-editor {
+  flex: 1;
+  min-width: 0;
+}
+
+.vb-preview {
+  width: 240px;
+  flex-shrink: 0;
+}
+
+.vb-section-label {
+  font-size: 11px;
   font-weight: 600;
-  color: #999;
+  color: #aaa;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  margin-bottom: 8px;
+}
+
+/* 8-column grid: name | type | pk | ai | nn | uq | default | delete */
+.col-grid {
+  display: grid;
+  grid-template-columns: 1fr 100px 28px 28px 28px 28px 70px 24px;
+  gap: 6px;
+  align-items: center;
+}
+
+.col-header {
+  padding-bottom: 8px;
+  border-bottom: 1px solid #f0f0f0;
+  margin-bottom: 4px;
+}
+
+.col-row {
+  margin-bottom: 6px;
+}
+
+.ch-left {
+  font-size: 11px;
+  font-weight: 600;
+  color: #aaa;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  margin-bottom: 8px;
+}
+
+.ch-tag {
+  font-size: 11px;
+  font-weight: 700;
+  color: #aaa;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  text-align: center;
+  display: block;
+  cursor: help;
+}
+
+.check-cell {
+  display: flex;
+  justify-content: center;
 }
 </style>

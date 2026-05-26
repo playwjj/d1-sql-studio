@@ -48,12 +48,13 @@
     <NSpin :show="loading">
       <NAlert v-if="error" type="error" :title="error" style="margin-bottom: 12px" />
       <NDataTable
+        class="keys-table"
         :columns="columns"
         :data="keys"
         :pagination="false"
         :bordered="false"
+        :single-line="false"
         size="small"
-        striped
       />
       <NEmpty v-if="!loading && keys.length === 0" description="No API keys yet" style="margin: 40px auto">
         <template #icon><Key :size="40" /></template>
@@ -66,7 +67,7 @@
 import { ref, onMounted, h } from 'vue';
 import {
   NDataTable, NButton, NCard, NForm, NFormItem, NInput, NInputGroup,
-  NSpace, NSpin, NAlert, NEmpty,
+  NSpace, NSpin, NAlert, NEmpty, NTooltip, NText,
   type DataTableColumns, type FormRules, type FormInst,
 } from 'naive-ui';
 import { Key, Plus, Trash2 } from '@lucide/vue';
@@ -96,21 +97,41 @@ const createRules: FormRules = {
 };
 
 const columns: DataTableColumns<ApiKeyInfo> = [
-  { title: 'Name', key: 'name' },
-  { title: 'Description', key: 'description', render: row => row.description ?? '—' },
+  {
+    title: 'Name',
+    key: 'name',
+    render: row => h('span', { class: 'key-name' }, row.name),
+  },
+  {
+    title: 'Description',
+    key: 'description',
+    render: row => row.description
+      ? h('span', { style: 'color: #555' }, row.description)
+      : h(NText, { depth: 3, style: 'font-style: italic; font-size: 13px' }, { default: () => 'No description' }),
+  },
   {
     title: 'Created',
     key: 'createdAt',
-    render: row => row.createdAt ? new Date(row.createdAt).toLocaleDateString() : '—',
+    width: 130,
+    render: row => row.createdAt
+      ? new Date(row.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
+      : '—',
   },
   {
-    title: 'Actions',
+    title: '',
     key: 'actions',
-    width: 80,
-    render: (row) => h(NButton, {
-      size: 'small', type: 'error',
-      onClick: () => handleDelete(row.id, row.name),
-    }, { icon: () => h(Trash2, { size: 13 }) }),
+    width: 60,
+    align: 'right',
+    render: (row) =>
+      h('div', { class: 'actions-cell' }, [
+        h(NTooltip, { trigger: 'hover' }, {
+          trigger: () => h(NButton, {
+            size: 'small', type: 'error', ghost: true,
+            onClick: () => handleDelete(row.id, row.name),
+          }, { icon: () => h(Trash2, { size: 13 }) }),
+          default: () => 'Delete key',
+        }),
+      ]),
   },
 ];
 
@@ -207,5 +228,21 @@ onMounted(loadKeys);
   margin: 0;
   font-size: 18px;
   font-weight: 600;
+}
+
+:deep(.key-name) {
+  font-weight: 500;
+}
+
+:deep(.actions-cell) {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+:deep(.keys-table .n-data-table-td) {
+  padding-top: 8px;
+  padding-bottom: 8px;
 }
 </style>

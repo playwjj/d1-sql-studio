@@ -10,15 +10,16 @@
 
     <template v-if="result.results && result.results.length > 0">
       <NDataTable
+        class="results-table"
         :columns="tableColumns"
         :data="result.results"
         :pagination="{ pageSize: 50, showSizePicker: true, pageSizes: [25, 50, 100, 200] }"
-        :bordered="true"
+        :bordered="false"
+        :single-line="false"
         size="small"
         :max-height="'calc(100vh - 420px)'"
         virtual-scroll
         :scroll-x="scrollX"
-        striped
       />
     </template>
     <template v-else>
@@ -44,7 +45,7 @@ const tableColumns = computed<DataTableColumns<RowData>>(() => {
   const rows = props.result.results ?? [];
   if (rows.length === 0) return [];
   return Object.keys(rows[0]).map(col => ({
-    title: col,
+    title: () => h('span', { class: 'col-title' }, col),
     key: col,
     width: 150,
     ellipsis: { tooltip: true },
@@ -68,8 +69,21 @@ const scrollX = computed(() => {
 
 <style scoped>
 .results-container { height: 100%; }
+
 .results-header {
   padding: 6px 16px;
   border-bottom: 1px solid #f0f0f0;
+}
+
+:deep(.col-title) {
+  font-family: 'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
+  font-size: 12px;
+  font-weight: 600;
+  color: #555;
+}
+
+:deep(.results-table .n-data-table-td) {
+  padding-top: 8px;
+  padding-bottom: 8px;
 }
 </style>

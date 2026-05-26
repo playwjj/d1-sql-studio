@@ -39,14 +39,17 @@
       <NSpin :show="loading">
         <NAlert v-if="error" type="error" :title="error" style="margin-bottom: 12px" />
         <NDataTable
+          class="data-table"
           :columns="tableColumns"
           :data="data"
           :pagination="false"
-          :bordered="true"
+          :bordered="false"
+          :single-line="false"
           size="small"
           :scroll-x="scrollX"
           :max-height="'calc(100vh - 240px)'"
           virtual-scroll
+          @update:sorter="handleSort"
         />
       </NSpin>
 
@@ -89,7 +92,7 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, h } from 'vue';
 import {
-  NEmpty, NSpace, NInput, NInputGroup, NButton, NDropdown, NDataTable,
+  NEmpty, NSpace, NInput, NInputGroup, NButton, NDropdown, NDataTable, NTooltip,
   NSpin, NAlert, NText, NPagination, NTag, NCollapse, NCollapseItem,
   type DataTableColumns, type DropdownOption,
 } from 'naive-ui';
@@ -129,31 +132,58 @@ const pageCount = computed(() => Math.ceil(total.value / PAGE_LIMIT) || 1);
 const scrollX = computed(() => Math.max(600, data.value.length > 0 ? Object.keys(data.value[0]).length * 140 : 600));
 
 const tableColumns = computed<DataTableColumns<RowData>>(() => {
+  const currentSortBy = sortBy.value;
+  const currentSortOrder = sortOrder.value;
   if (data.value.length === 0) return [];
   const cols: DataTableColumns<RowData> = Object.keys(data.value[0]).map(col => ({
-    title: col,
+    title: () => h('span', { class: 'col-title' }, col),
     key: col,
     width: 140,
     ellipsis: { tooltip: true },
     sorter: true,
+    sortOrder: currentSortBy === col
+      ? (currentSortOrder === 'asc' ? 'ascend' : 'descend')
+      : false,
     render: (row: RowData) => row[col] === null || row[col] === undefined
       ? h(NullValue)
       : String(row[col]),
   }));
   cols.push({
-    title: 'Actions',
+    title: '',
     key: '__actions',
-    width: 100,
+    width: 110,
     fixed: 'right',
-    render: (row: RowData) => h(NSpace, { size: 'small' }, {
-      default: () => [
-        h(NButton, { size: 'tiny', onClick: () => handleEdit(row) }, { icon: () => h(Pencil, { size: 12 }) }),
-        h(NButton, { size: 'tiny', type: 'error', onClick: () => handleDelete(row) }, { icon: () => h(Trash2, { size: 12 }) }),
-      ],
-    }),
+    align: 'right',
+    render: (row: RowData) =>
+      h('div', { class: 'actions-cell' }, [
+        h(NTooltip, { trigger: 'hover' }, {
+          trigger: () => h(NButton, {
+            size: 'small', secondary: true,
+            onClick: () => handleEdit(row),
+          }, { icon: () => h(Pencil, { size: 13 }) }),
+          default: () => 'Edit row',
+        }),
+        h(NTooltip, { trigger: 'hover' }, {
+          trigger: () => h(NButton, {
+            size: 'small', type: 'error', ghost: true,
+            onClick: () => handleDelete(row),
+          }, { icon: () => h(Trash2, { size: 13 }) }),
+          default: () => 'Delete row',
+        }),
+      ]),
   });
   return cols;
 });
+
+function handleSort(sortState: { columnKey: string | number; order: 'ascend' | 'descend' | false } | null) {
+  if (!sortState || sortState.order === false) {
+    sortBy.value = '';
+    sortOrder.value = 'asc';
+  } else {
+    sortBy.value = String(sortState.columnKey);
+    sortOrder.value = sortState.order === 'ascend' ? 'asc' : 'desc';
+  }
+}
 
 const exportOptions: DropdownOption[] = [
   { label: 'Export as CSV', key: 'csv' },
@@ -274,5 +304,25 @@ onMounted(loadData);
   justify-content: space-between;
   margin-top: 12px;
   padding: 0 2px;
+}
+
+:deep(.col-title) {
+  font-family: 'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
+  font-size: 12px;
+  font-weight: 600;
+  color: #555;
+}
+
+:deep(.actions-cell) {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+:deep(.data-table .n-data-table-td) {
+  padding-top: 8px;
+  padding-bottom: 8px;
 }
 </style>
