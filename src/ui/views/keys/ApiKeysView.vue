@@ -52,7 +52,7 @@
         :columns="columns"
         :data="keys"
         :pagination="false"
-        :bordered="false"
+        :bordered="true"
         :single-line="false"
         size="small"
       />

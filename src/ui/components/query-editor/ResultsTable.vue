@@ -14,7 +14,7 @@
         :columns="tableColumns"
         :data="result.results"
         :pagination="{ pageSize: 50, showSizePicker: true, pageSizes: [25, 50, 100, 200] }"
-        :bordered="false"
+        :bordered="true"
         :single-line="false"
         size="small"
         :max-height="'calc(100vh - 420px)'"

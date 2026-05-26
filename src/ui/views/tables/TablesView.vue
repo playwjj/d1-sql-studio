@@ -32,7 +32,7 @@
           :columns="columns"
           :data="tablesStore.tableList"
           :pagination="false"
-          :bordered="false"
+          :bordered="true"
           :single-line="false"
           size="small"
           class="tables-table"
@@ -87,7 +87,7 @@ const editingTable = ref('');
 
 const columns: DataTableColumns<TableInfo> = [
   {
-    title: 'Name',
+    title: () => h('span', { class: 'col-title' }, 'Name'),
     key: 'name',
     sorter: 'default',
     render: (row) =>
@@ -217,11 +217,17 @@ onMounted(loadTables);
 }
 
 /* Table cell styles — pierce Naive UI shadow DOM with :deep() */
+:deep(.col-title) {
+  font-family: 'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
+  font-size: 12px;
+  font-weight: 600;
+  color: #555;
+}
+
 :deep(.table-name-cell) {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 2px 0;
 }
 
 :deep(.table-icon) {
