@@ -12,17 +12,18 @@
           <NTag type="default" size="small">Data Browser</NTag>
         </div>
         <NSpace>
-          <NInputGroup>
-            <NInput
-              v-model:value="searchInput"
-              placeholder="Search..."
-              clearable
-              size="small"
-              @keydown.enter="doSearch"
-              @clear="clearSearch"
-            />
-            <NButton size="small" @click="doSearch">Search</NButton>
-          </NInputGroup>
+          <NInput
+            v-model:value="searchInput"
+            placeholder="Search..."
+            clearable
+            size="small"
+            style="width: 200px"
+            @keydown.enter="doSearch"
+            @clear="clearSearch"
+            @update:value="onSearchInput"
+          >
+            <template #prefix><Search :size="13" /></template>
+          </NInput>
           <NDropdown :options="exportOptions" @select="handleExport">
             <NButton size="small" secondary>
               <template #icon><Download :size="13" /></template>
@@ -53,7 +54,7 @@
       </NSpin>
 
       <div class="table-footer">
-        <NText depth="3" style="font-size: 12px">{{ total }} rows total</NText>
+        <NText depth="3" style="font-size: 12px">{{ rangeText }}</NText>
         <NPagination
           v-model:page="page"
           :page-count="pageCount"
@@ -89,9 +90,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, h } from 'vue';
+import { ref, computed, watch, onMounted, onUnmounted, h } from 'vue';
 import {
-  NEmpty, NSpace, NInput, NInputGroup, NButton, NDropdown, NDataTable, NTooltip,
+  NEmpty, NSpace, NInput, NButton, NDropdown, NDataTable, NTooltip,
   NSpin, NAlert, NText, NPagination, NTag, NCollapse, NCollapseItem,
   type DataTableColumns, type DropdownOption,
 } from 'naive-ui';
@@ -128,7 +129,22 @@ const showEditModal = ref(false);
 const editingRow = ref<RowData | null>(null);
 
 const pageCount = computed(() => Math.ceil(total.value / PAGE_LIMIT) || 1);
-const scrollX = computed(() => Math.max(600, data.value.length > 0 ? Object.keys(data.value[0]).length * 140 : 600));
+
+const rangeText = computed(() => {
+  if (total.value === 0) return '0 rows';
+  const start = (page.value - 1) * PAGE_LIMIT + 1;
+  const end = Math.min(page.value * PAGE_LIMIT, total.value);
+  return `${start}–${end} of ${total.value} rows`;
+});
+
+function colWidth(col: string): number {
+  return Math.max(100, Math.min(col.length * 9 + 48, 280));
+}
+
+const scrollX = computed(() => {
+  if (data.value.length === 0) return 600;
+  return Math.max(600, Object.keys(data.value[0]).reduce((sum, col) => sum + colWidth(col), 0) + 110);
+});
 
 const tableColumns = computed<DataTableColumns<RowData>>(() => {
   const currentSortBy = sortBy.value;
@@ -137,7 +153,7 @@ const tableColumns = computed<DataTableColumns<RowData>>(() => {
   const cols: DataTableColumns<RowData> = Object.keys(data.value[0]).map(col => ({
     title: () => h('span', { class: 'col-title' }, col),
     key: col,
-    width: 140,
+    width: colWidth(col),
     sorter: true,
     sortOrder: currentSortBy === col
       ? (currentSortOrder === 'asc' ? 'ascend' : 'descend')
@@ -220,16 +236,27 @@ async function loadData() {
   }
 }
 
+let searchTimer: ReturnType<typeof setTimeout> | null = null;
+
+function onSearchInput(val: string) {
+  if (searchTimer) clearTimeout(searchTimer);
+  searchTimer = setTimeout(() => { search.value = val; page.value = 1; }, 300);
+}
+
 function doSearch() {
+  if (searchTimer) clearTimeout(searchTimer);
   search.value = searchInput.value;
   page.value = 1;
 }
 
 function clearSearch() {
+  if (searchTimer) clearTimeout(searchTimer);
   search.value = '';
   searchInput.value = '';
   page.value = 1;
 }
+
+onUnmounted(() => { if (searchTimer) clearTimeout(searchTimer); });
 
 function handleEdit(row: RowData) {
   editingRow.value = { ...row };

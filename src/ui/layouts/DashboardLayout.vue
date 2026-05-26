@@ -25,14 +25,27 @@
       <!-- Table list -->
       <NDivider style="margin: 8px 0" />
       <div class="sidebar-section-label">Tables</div>
+      <div class="sidebar-search">
+        <NInput
+          v-model:value="tableFilter"
+          placeholder="Filter tables…"
+          size="small"
+          clearable
+        >
+          <template #prefix><Search :size="12" color="#aaa" /></template>
+        </NInput>
+      </div>
       <NSpin v-if="tablesStore.loading" size="small" style="margin: 12px auto; display: block" />
-      <NMenu
-        v-else
-        :value="tablesStore.selectedTable"
-        :options="tableMenuOptions"
-        :indent="18"
-        @update:value="handleTableSelect"
-      />
+      <template v-else>
+        <NMenu
+          v-if="filteredTableOptions.length > 0"
+          :value="tablesStore.selectedTable"
+          :options="filteredTableOptions"
+          :indent="18"
+          @update:value="handleTableSelect"
+        />
+        <div v-else-if="tableFilter" class="sidebar-no-match">No match</div>
+      </template>
 
       <div style="flex: 1" />
 
@@ -52,10 +65,10 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, h } from 'vue';
+import { computed, ref, onMounted, h } from 'vue';
 import { useRoute, useRouter, RouterView } from 'vue-router';
 import {
-  NLayout, NLayoutSider, NLayoutContent, NMenu, NDivider, NSpin, NButton,
+  NLayout, NLayoutSider, NLayoutContent, NMenu, NDivider, NSpin, NButton, NInput,
   type MenuOption,
 } from 'naive-ui';
 import { Database, Table2, Search, Code2, Key, LogOut } from '@lucide/vue';
@@ -70,19 +83,23 @@ const tablesStore = useTablesStore();
 const currentRoute = computed(() => route.name as string);
 
 const menuOptions: MenuOption[] = [
-  { label: 'Tables',      key: 'tables', icon: () => h(Table2, { size: 15 }) },
-  { label: 'Data Browser',key: 'data',   icon: () => h(Search, { size: 15 }) },
-  { label: 'SQL Query',   key: 'query',  icon: () => h(Code2,  { size: 15 }) },
-  { label: 'API Keys',    key: 'keys',   icon: () => h(Key,    { size: 15 }) },
+  { label: 'Tables',    key: 'tables', icon: () => h(Table2, { size: 15 }) },
+  { label: 'SQL Query', key: 'query',  icon: () => h(Code2,  { size: 15 }) },
+  { label: 'API Keys',  key: 'keys',   icon: () => h(Key,    { size: 15 }) },
 ];
 
-const tableMenuOptions = computed<MenuOption[]>(() =>
-  tablesStore.tableList.map(t => ({
-    label: t.name,
-    key: t.name,
-    icon: () => h(Table2, { size: 13 }),
-  }))
-);
+const tableFilter = ref('');
+
+const filteredTableOptions = computed<MenuOption[]>(() => {
+  const q = tableFilter.value.toLowerCase();
+  return tablesStore.tableList
+    .filter(t => !q || t.name.toLowerCase().includes(q))
+    .map(t => ({
+      label: t.name,
+      key: t.name,
+      icon: () => h(Table2, { size: 13 }),
+    }));
+});
 
 function handleNav(key: string) {
   router.push({ name: key });
@@ -120,6 +137,16 @@ onMounted(() => {
   color: #999;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+}
+
+.sidebar-search {
+  padding: 0 10px 8px;
+}
+
+.sidebar-no-match {
+  padding: 6px 18px;
+  font-size: 12px;
+  color: #bbb;
 }
 
 .sidebar-footer {

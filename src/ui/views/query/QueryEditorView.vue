@@ -1,5 +1,5 @@
 <template>
-  <div class="query-view">
+  <div class="query-view" :class="{ dragging: isDragging }">
     <div class="query-toolbar">
       <NSpace align="center">
         <NButton type="primary" :loading="loading" @click="executeQuery">
@@ -31,7 +31,7 @@
       </NSpace>
     </div>
 
-    <div class="editor-wrapper">
+    <div class="editor-wrapper" :style="{ height: editorHeight + 'px' }">
       <SqlEditor
         v-model="sql"
         :tables="tablesStore.tableList.map(t => t.name)"
@@ -39,9 +39,13 @@
       />
     </div>
 
+    <div class="drag-handle" @mousedown.prevent="startDrag">
+      <div class="drag-handle-grip" />
+    </div>
+
     <div class="results-wrapper">
       <NAlert v-if="queryError" type="error" :title="queryError" style="margin: 12px 16px" />
-      <ResultsTable v-else-if="result" :result="result" />
+      <ResultsTable v-else-if="result" :result="result" :max-height="resultsMaxHeight" />
       <NEmpty
         v-else
         description="Run a query to see results"
@@ -60,7 +64,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 import {
   NSpace, NButton, NText, NAlert, NEmpty, NDropdown,
   type DropdownOption,
@@ -82,6 +86,39 @@ const authStore = useAuthStore();
 const tablesStore = useTablesStore();
 const notif = useNotificationStore();
 const { handleExportCSV, handleExportJSON, handleCopySQLInserts } = useExport();
+
+// --- drag-to-resize state ---
+const editorHeight = ref(300);
+const isDragging = ref(false);
+let dragStartY = 0;
+let dragStartHeight = 0;
+
+const resultsMaxHeight = computed(() => `calc(100vh - ${editorHeight.value + 101}px)`);
+
+function startDrag(e: MouseEvent) {
+  isDragging.value = true;
+  dragStartY = e.clientY;
+  dragStartHeight = editorHeight.value;
+  document.addEventListener('mousemove', onDrag);
+  document.addEventListener('mouseup', stopDrag);
+}
+
+function onDrag(e: MouseEvent) {
+  const delta = e.clientY - dragStartY;
+  editorHeight.value = Math.max(80, Math.min(dragStartHeight + delta, window.innerHeight - 160));
+}
+
+function stopDrag() {
+  isDragging.value = false;
+  document.removeEventListener('mousemove', onDrag);
+  document.removeEventListener('mouseup', stopDrag);
+}
+
+onUnmounted(() => {
+  document.removeEventListener('mousemove', onDrag);
+  document.removeEventListener('mouseup', stopDrag);
+});
+// ---
 
 const sql = ref('SELECT * FROM sqlite_master WHERE type = \'table\';');
 const result = ref<QueryResult | null>(null);
@@ -171,13 +208,49 @@ onMounted(() => {
 }
 
 .editor-wrapper {
-  flex: 0 0 300px;
-  border-bottom: 1px solid #f0f0f0;
+  flex-shrink: 0;
   overflow: hidden;
+}
+
+.drag-handle {
+  height: 9px;
+  flex-shrink: 0;
+  cursor: ns-resize;
+  background: transparent;
+  border-top: 1px solid #f0f0f0;
+  border-bottom: 1px solid #f0f0f0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+}
+
+.drag-handle:hover,
+.dragging .drag-handle {
+  background: #e8f5ee;
+}
+
+.drag-handle-grip {
+  width: 32px;
+  height: 3px;
+  border-radius: 2px;
+  background: #d0d0d0;
+  transition: background 0.15s;
+}
+
+.drag-handle:hover .drag-handle-grip,
+.dragging .drag-handle-grip {
+  background: #18a058;
 }
 
 .results-wrapper {
   flex: 1;
-  overflow: auto;
+  overflow: hidden;
+  min-height: 0;
+}
+
+.query-view.dragging {
+  user-select: none;
+  cursor: ns-resize;
 }
 </style>

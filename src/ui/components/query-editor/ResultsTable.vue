@@ -17,7 +17,7 @@
         :bordered="true"
         :single-line="false"
         size="small"
-        :max-height="'calc(100vh - 420px)'"
+        :max-height="props.maxHeight ?? 'calc(100vh - 420px)'"
         :scroll-x="scrollX"
       />
     </template>
@@ -38,7 +38,7 @@ import { NDataTable, NText, NAlert, NTooltip, type DataTableColumns } from 'naiv
 import type { QueryResult, RowData } from '@/types';
 import NullValue from '@/components/shared/NullValue.vue';
 
-const props = defineProps<{ result: QueryResult }>();
+const props = defineProps<{ result: QueryResult; maxHeight?: string }>();
 
 const tableColumns = computed<DataTableColumns<RowData>>(() => {
   const rows = props.result.results ?? [];

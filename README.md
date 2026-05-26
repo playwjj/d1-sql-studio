@@ -1,11 +1,17 @@
 # D1 SQL Studio
 
-A professional database management tool for Cloudflare D1, built with **Vue 3 + Naive UI + TypeScript + Vite**.
+A management UI and REST API gateway for Cloudflare D1 — bringing your edge database to the outside world, built with **Vue 3 + Naive UI + TypeScript + Vite**.
 
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 ![Cloudflare Workers](https://img.shields.io/badge/Cloudflare-Workers-F38020)
 ![Vue 3](https://img.shields.io/badge/Vue-3-4FC08D?logo=vue.js&logoColor=white)
 ![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?logo=typescript&logoColor=white)
+
+## 💡 Motivation
+
+Cloudflare D1 is built to live inside the Cloudflare ecosystem. Data flows in and out through Worker bindings and platform-native APIs — which works perfectly for edge applications, but leaves a gap: accessing D1 from the outside world requires writing custom Worker code for every use case.
+
+D1 SQL Studio bridges that gap with a single, self-hosted Worker that exposes your database as a **standardized REST API** — authenticated, paginated, and fully queryable — so any external system (scripts, dashboards, data pipelines, BI tools) can interact with D1 in a consistent, predictable way. The management UI is the human-friendly layer on top of that same API.
 
 ## ✨ Features
 
