@@ -30,7 +30,6 @@
     "@codemirror/state": "^6.5.2",
     "@codemirror/view": "^6.38.8",
     "@lucide/vue": "^1.16.0",
-    "hono": "^4.12.23",
     "naive-ui": "^2.44.1",
     "pinia": "^3.0.4",
     "sql-formatter": "^15.6.10",

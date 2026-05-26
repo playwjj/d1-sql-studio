@@ -1,62 +1,65 @@
-import { Hono } from 'hono';
-import type { Env } from './types';
+import { Env } from './types';
 import { authenticate, corsHeaders } from './auth';
 import { Router } from './router';
 import { safeJsonStringify } from './utils';
 
-const app = new Hono<{ Bindings: Env }>();
+export default {
+  async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
+    const url = new URL(request.url);
 
-// CORS preflight
-app.options('*', (c) => new Response(null, { headers: corsHeaders(c.req.raw) }));
-
-// Root redirect to dashboard
-app.get('/', (c) => c.redirect('/dashboard', 302));
-
-// Serve SPA index.html for /dashboard and all sub-paths (Vue history mode)
-const serveSPA = async (c: any) => {
-  const { origin } = new URL(c.req.url);
-  return c.env.ASSETS.fetch(new Request(`${origin}/`, c.req.raw));
-};
-app.get('/dashboard', serveSPA);
-app.get('/dashboard/*', serveSPA);
-
-// Auth middleware for API routes
-app.use('/api/*', async (c, next) => {
-  const isKeysStatus = c.req.path === '/api/keys/status' && c.req.method === 'GET';
-  const isFirstKey = c.req.path === '/api/keys' && c.req.method === 'POST';
-  if (!isKeysStatus && !isFirstKey && !(await authenticate(c.req.raw, c.env))) {
-    return new Response(
-      safeJsonStringify({ success: false, error: 'Unauthorized' }),
-      { status: 401, headers: { 'Content-Type': 'application/json', ...corsHeaders(c.req.raw) } }
-    );
-  }
-  return next();
-});
-
-// API routes
-app.all('/api/*', async (c) => {
-  try {
-    const router = new Router(c.env);
-    const response = await router.route(c.req.raw);
-    const headers = new Headers(response.headers);
-    Object.entries(corsHeaders(c.req.raw)).forEach(([k, v]) => headers.set(k, v));
-    return new Response(response.body, { status: response.status, headers });
-  } catch (error: any) {
-    if (error.message === 'DATABASE_NOT_BOUND') {
-      return new Response(
-        safeJsonStringify({
-          success: false,
-          error: 'DATABASE_NOT_BOUND',
-          message: 'No D1 database is bound to this Worker. Please bind a database in Cloudflare Dashboard.',
-        }),
-        { status: 503, headers: { 'Content-Type': 'application/json', ...corsHeaders(c.req.raw) } }
-      );
+    if (request.method === 'OPTIONS') {
+      return new Response(null, { headers: corsHeaders(request) });
     }
-    throw error;
-  }
-});
 
-// Static assets fallback
-app.get('*', (c) => c.env.ASSETS.fetch(c.req.raw));
+    if (url.pathname.startsWith('/api/')) {
+      const isKeysStatusCheck = url.pathname === '/api/keys/status' && request.method === 'GET';
+      const isFirstKeyCreation = url.pathname === '/api/keys' && request.method === 'POST';
 
-export default app;
+      if (!isKeysStatusCheck && !isFirstKeyCreation) {
+        if (!(await authenticate(request, env))) {
+          return new Response(
+            safeJsonStringify({ success: false, error: 'Unauthorized' }),
+            {
+              status: 401,
+              headers: { 'Content-Type': 'application/json', ...corsHeaders(request) },
+            }
+          );
+        }
+      }
+
+      try {
+        const router = new Router(env);
+        const response = await router.route(request);
+        const newHeaders = new Headers(response.headers);
+        Object.entries(corsHeaders(request)).forEach(([key, value]) => newHeaders.set(key, value));
+        return new Response(response.body, { status: response.status, headers: newHeaders });
+      } catch (error: any) {
+        if (error.message === 'DATABASE_NOT_BOUND') {
+          return new Response(
+            safeJsonStringify({
+              success: false,
+              error: 'DATABASE_NOT_BOUND',
+              message: 'No D1 database is bound to this Worker. Please bind a database in Cloudflare Dashboard.',
+            }),
+            {
+              status: 503,
+              headers: { 'Content-Type': 'application/json', ...corsHeaders(request) },
+            }
+          );
+        }
+        throw error;
+      }
+    }
+
+    if (url.pathname === '/') {
+      return Response.redirect(`${url.origin}/dashboard`, 302);
+    }
+
+    // Serve index.html for all /dashboard paths (Vue history mode)
+    if (url.pathname === '/dashboard' || url.pathname.startsWith('/dashboard/')) {
+      return env.ASSETS.fetch(new Request(`${url.origin}/`, request));
+    }
+
+    return env.ASSETS.fetch(request);
+  },
+};
