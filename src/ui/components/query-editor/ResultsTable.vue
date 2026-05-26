@@ -18,7 +18,6 @@
         :single-line="false"
         size="small"
         :max-height="'calc(100vh - 420px)'"
-        virtual-scroll
         :scroll-x="scrollX"
       />
     </template>
@@ -48,7 +47,7 @@ const tableColumns = computed<DataTableColumns<RowData>>(() => {
     title: () => h('span', { class: 'col-title' }, col),
     key: col,
     width: 150,
-    ellipsis: { tooltip: true },
+    ellipsis: { tooltip: { style: { maxWidth: '400px', wordBreak: 'break-all' } } },
     sorter: (a: RowData, b: RowData) => {
       const av = a[col], bv = b[col];
       if (av === null) return -1;

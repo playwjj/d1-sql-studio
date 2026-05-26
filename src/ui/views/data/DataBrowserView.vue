@@ -48,7 +48,6 @@
           size="small"
           :scroll-x="scrollX"
           :max-height="'calc(100vh - 240px)'"
-          virtual-scroll
           @update:sorter="handleSort"
         />
       </NSpin>
@@ -139,7 +138,7 @@ const tableColumns = computed<DataTableColumns<RowData>>(() => {
     title: () => h('span', { class: 'col-title' }, col),
     key: col,
     width: 140,
-    ellipsis: { tooltip: true },
+    ellipsis: { tooltip: { style: { maxWidth: '400px', wordBreak: 'break-all' } } },
     sorter: true,
     sortOrder: currentSortBy === col
       ? (currentSortOrder === 'asc' ? 'ascend' : 'descend')
