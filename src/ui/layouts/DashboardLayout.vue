@@ -32,7 +32,7 @@
           size="small"
           clearable
         >
-          <template #prefix><Search :size="12" color="#aaa" /></template>
+          <template #prefix><Search :size="12" color="#8890a6" /></template>
         </NInput>
       </div>
       <NSpin v-if="tablesStore.loading" size="small" style="margin: 12px auto; display: block" />
@@ -121,20 +121,20 @@ onMounted(() => {
   align-items: center;
   gap: 8px;
   padding: 16px 18px 12px;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid #dde1eb;
 }
 
 .sidebar-title {
   font-size: 14px;
   font-weight: 700;
-  color: #333;
+  color: #1c1f2e;
 }
 
 .sidebar-section-label {
   padding: 0 18px 4px;
   font-size: 11px;
   font-weight: 600;
-  color: #999;
+  color: #7e8494;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
@@ -151,6 +151,6 @@ onMounted(() => {
 
 .sidebar-footer {
   padding: 12px 18px;
-  border-top: 1px solid #f0f0f0;
+  border-top: 1px solid #dde1eb;
 }
 </style>

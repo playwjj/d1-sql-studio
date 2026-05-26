@@ -221,7 +221,7 @@ onMounted(loadTables);
   font-family: 'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
   font-size: 12px;
   font-weight: 600;
-  color: #555;
+  color: #4a5068;
 }
 
 :deep(.table-name-cell) {
@@ -231,7 +231,7 @@ onMounted(loadTables);
 }
 
 :deep(.table-icon) {
-  color: #aaa;
+  color: #8890a6;
   flex-shrink: 0;
 }
 

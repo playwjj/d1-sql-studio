@@ -106,7 +106,7 @@ const columns: DataTableColumns<ApiKeyInfo> = [
     title: 'Description',
     key: 'description',
     render: row => row.description
-      ? h('span', { style: 'color: #555' }, row.description)
+      ? h('span', { style: 'color: #4a5068' }, row.description)
       : h(NText, { depth: 3, style: 'font-style: italic; font-size: 13px' }, { default: () => 'No description' }),
   },
   {

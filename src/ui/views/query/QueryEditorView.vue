@@ -205,7 +205,7 @@ onMounted(() => {
   align-items: center;
   justify-content: space-between;
   padding: 10px 16px;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid #dde1eb;
   flex-shrink: 0;
 }
 
@@ -219,8 +219,8 @@ onMounted(() => {
   flex-shrink: 0;
   cursor: ns-resize;
   background: transparent;
-  border-top: 1px solid #f0f0f0;
-  border-bottom: 1px solid #f0f0f0;
+  border-top: 1px solid #dde1eb;
+  border-bottom: 1px solid #dde1eb;
   display: flex;
   align-items: center;
   justify-content: center;

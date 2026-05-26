@@ -111,14 +111,14 @@ const scrollX = computed(() => {
 
 .results-header {
   padding: 6px 16px;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid #dde1eb;
 }
 
 :deep(.col-title) {
   font-family: 'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
   font-size: 12px;
   font-weight: 600;
-  color: #555;
+  color: #4a5068;
 }
 
 :deep(.results-table .n-data-table-td) {
@@ -136,7 +136,7 @@ const scrollX = computed(() => {
 }
 
 :deep(.cell-long) {
-  color: #999;
+  color: #7e8494;
   font-style: italic;
 }
 

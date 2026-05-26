@@ -206,7 +206,7 @@ async function handleCreate() {
 .vb-section-label {
   font-size: 11px;
   font-weight: 600;
-  color: #aaa;
+  color: #8890a6;
   text-transform: uppercase;
   letter-spacing: 0.6px;
   margin-bottom: 8px;
@@ -222,7 +222,7 @@ async function handleCreate() {
 
 .col-header {
   padding-bottom: 8px;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid #dde1eb;
   margin-bottom: 4px;
 }
 
@@ -233,7 +233,7 @@ async function handleCreate() {
 .ch-left {
   font-size: 11px;
   font-weight: 600;
-  color: #aaa;
+  color: #8890a6;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
@@ -241,7 +241,7 @@ async function handleCreate() {
 .ch-tag {
   font-size: 11px;
   font-weight: 700;
-  color: #aaa;
+  color: #8890a6;
   text-transform: uppercase;
   letter-spacing: 0.3px;
   text-align: center;

@@ -100,7 +100,7 @@ function handleDelete(id: string) {
 
 .history-item {
   padding: 8px 10px;
-  border: 1px solid #f0f0f0;
+  border: 1px solid #dde1eb;
   border-radius: 6px;
   cursor: default;
 }

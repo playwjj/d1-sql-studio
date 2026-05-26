@@ -79,7 +79,7 @@ async function copyExample(example: { id: string; curl: string }) {
 .api-docs { display: flex; flex-direction: column; gap: 12px; }
 
 .api-example {
-  border: 1px solid #f0f0f0;
+  border: 1px solid #dde1eb;
   border-radius: 6px;
   padding: 10px 12px;
 }
@@ -93,6 +93,6 @@ async function copyExample(example: { id: string; curl: string }) {
 .example-title {
   font-size: 13px;
   font-weight: 500;
-  color: #333;
+  color: #1c1f2e;
 }
 </style>

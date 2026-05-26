@@ -387,7 +387,7 @@ onMounted(loadData);
   font-family: 'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
   font-size: 12px;
   font-weight: 600;
-  color: #555;
+  color: #4a5068;
 }
 
 :deep(.col-type) {
@@ -421,7 +421,7 @@ onMounted(loadData);
 }
 
 :deep(.cell-long) {
-  color: #999;
+  color: #8890a6;
   font-style: italic;
 }
 

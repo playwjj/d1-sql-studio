@@ -109,7 +109,7 @@ watch(() => (props.tables ?? []).length, () => {
 <style scoped>
 .sql-editor {
   height: 100%;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid #dde1eb;
 }
 
 :deep(.cm-editor) {
