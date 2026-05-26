@@ -71,10 +71,21 @@ export default {
       }
     }
 
-    // Serve static assets; for SPA history-mode routes (no file extension) fall back to index.html
-    if (/\.[^./]+$/.test(url.pathname)) {
-      return env.ASSETS.fetch(request);
+    // Serve static assets with SPA fallback for Vue Router history mode
+    const hasExtension = /\.[^./]+$/.test(url.pathname);
+    try {
+      if (hasExtension) {
+        return await env.ASSETS.fetch(request);
+      }
+      // SPA route — explicitly request index.html
+      return await env.ASSETS.fetch(
+        new Request(new URL('/index.html', request.url).href, { method: 'GET' })
+      );
+    } catch {
+      // Last-resort fallback if ASSETS throws
+      return await env.ASSETS.fetch(
+        new Request(new URL('/index.html', request.url).href, { method: 'GET' })
+      );
     }
-    return env.ASSETS.fetch(new Request(new URL('/', request.url).toString(), request));
   },
 };
