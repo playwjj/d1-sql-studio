@@ -71,21 +71,7 @@ export default {
       }
     }
 
-    // Serve static assets with SPA fallback for Vue Router history mode
-    const hasExtension = /\.[^./]+$/.test(url.pathname);
-    try {
-      if (hasExtension) {
-        return await env.ASSETS.fetch(request);
-      }
-      // SPA route — explicitly request index.html
-      return await env.ASSETS.fetch(
-        new Request(new URL('/index.html', request.url).href, { method: 'GET' })
-      );
-    } catch {
-      // Last-resort fallback if ASSETS throws
-      return await env.ASSETS.fetch(
-        new Request(new URL('/index.html', request.url).href, { method: 'GET' })
-      );
-    }
+    // Serve static assets (hash-mode SPA — browser always sends /, no server routing needed)
+    return env.ASSETS.fetch(request);
   },
 };
