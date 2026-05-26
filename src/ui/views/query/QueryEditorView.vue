@@ -88,7 +88,8 @@ const notif = useNotificationStore();
 const { handleExportCSV, handleExportJSON, handleCopySQLInserts } = useExport();
 
 // --- drag-to-resize state ---
-const editorHeight = ref(300);
+const EDITOR_HEIGHT_KEY = 'd1studio:editorHeight';
+const editorHeight = ref(Math.max(80, Number(localStorage.getItem(EDITOR_HEIGHT_KEY)) || 300));
 const isDragging = ref(false);
 let dragStartY = 0;
 let dragStartHeight = 0;
@@ -110,6 +111,7 @@ function onDrag(e: MouseEvent) {
 
 function stopDrag() {
   isDragging.value = false;
+  localStorage.setItem(EDITOR_HEIGHT_KEY, String(editorHeight.value));
   document.removeEventListener('mousemove', onDrag);
   document.removeEventListener('mouseup', stopDrag);
 }

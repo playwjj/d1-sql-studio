@@ -1,5 +1,10 @@
 <template>
   <div class="results-container">
+    <NModal v-model:show="showExpandModal" preset="card" :title="expandedCell?.col" style="max-width: 640px; width: 90vw">
+      <NScrollbar style="max-height: 60vh">
+        <pre class="expanded-cell-content">{{ expandedCell?.value }}</pre>
+      </NScrollbar>
+    </NModal>
     <div class="results-header">
       <NText depth="3" style="font-size: 12px">
         {{ result.results?.length ?? 0 }} row{{ (result.results?.length ?? 0) !== 1 ? 's' : '' }}
@@ -33,12 +38,30 @@
 </template>
 
 <script setup lang="ts">
-import { computed, h } from 'vue';
-import { NDataTable, NText, NAlert, NTooltip, type DataTableColumns } from 'naive-ui';
+import { ref, computed, h } from 'vue';
+import { NDataTable, NText, NAlert, NTooltip, NModal, NScrollbar, type DataTableColumns } from 'naive-ui';
+import { useNotificationStore } from '@/stores/notification';
 import type { QueryResult, RowData } from '@/types';
 import NullValue from '@/components/shared/NullValue.vue';
 
 const props = defineProps<{ result: QueryResult; maxHeight?: string }>();
+
+const notif = useNotificationStore();
+const showExpandModal = ref(false);
+const expandedCell = ref<{ col: string; value: string } | null>(null);
+
+function copyCell(val: string, e: MouseEvent) {
+  e.stopPropagation();
+  navigator.clipboard?.writeText(val)
+    .then(() => notif.showToast({ message: 'Copied', type: 'success' }))
+    .catch(() => notif.showToast({ message: 'Copy failed', type: 'warning' }));
+}
+
+function expandCell(col: string, val: string, e: MouseEvent) {
+  e.stopPropagation();
+  expandedCell.value = { col, value: val };
+  showExpandModal.value = true;
+}
 
 const tableColumns = computed<DataTableColumns<RowData>>(() => {
   const rows = props.result.results ?? [];
@@ -58,10 +81,18 @@ const tableColumns = computed<DataTableColumns<RowData>>(() => {
       if (val === null || val === undefined) return h(NullValue);
       const str = String(val);
       if (str.length > 200) {
-        return h('span', { class: 'cell-text' }, str);
+        return h('span', {
+          class: 'cell-text cell-long',
+          title: 'Click to copy · Double-click to expand',
+          onClick: (e: MouseEvent) => copyCell(str, e),
+          onDblclick: (e: MouseEvent) => expandCell(col, str, e),
+        }, str);
       }
       return h(NTooltip, { trigger: 'hover', placement: 'top-start', keepAliveOnHover: false }, {
-        trigger: () => h('span', { class: 'cell-text' }, str),
+        trigger: () => h('span', {
+          class: 'cell-text',
+          onClick: (e: MouseEvent) => copyCell(str, e),
+        }, str),
         default: () => h('span', { style: 'white-space: pre-wrap; word-break: break-all' }, str),
       });
     },
@@ -101,5 +132,20 @@ const scrollX = computed(() => {
   text-overflow: ellipsis;
   white-space: nowrap;
   max-width: 100%;
+  cursor: pointer;
+}
+
+:deep(.cell-long) {
+  color: #999;
+  font-style: italic;
+}
+
+.expanded-cell-content {
+  margin: 0;
+  font-family: 'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
+  font-size: 13px;
+  white-space: pre-wrap;
+  word-break: break-all;
+  line-height: 1.6;
 }
 </style>

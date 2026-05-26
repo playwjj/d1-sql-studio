@@ -86,6 +86,12 @@
       :row-data="editingRow"
       @success="loadData"
     />
+
+    <NModal v-model:show="showExpandModal" preset="card" :title="expandedCell?.col" style="max-width: 640px; width: 90vw">
+      <NScrollbar style="max-height: 60vh">
+        <pre class="expanded-cell-content">{{ expandedCell?.value }}</pre>
+      </NScrollbar>
+    </NModal>
   </div>
 </template>
 
@@ -93,7 +99,7 @@
 import { ref, computed, watch, onMounted, onUnmounted, h } from 'vue';
 import {
   NEmpty, NSpace, NInput, NButton, NDropdown, NDataTable, NTooltip,
-  NSpin, NAlert, NText, NPagination, NTag, NCollapse, NCollapseItem,
+  NSpin, NAlert, NText, NPagination, NTag, NCollapse, NCollapseItem, NModal, NScrollbar,
   type DataTableColumns, type DropdownOption,
 } from 'naive-ui';
 import { Search, Download, Plus, Pencil, Trash2 } from '@lucide/vue';
@@ -102,6 +108,7 @@ import { useTablesStore } from '@/stores/tables';
 import { useNotificationStore } from '@/stores/notification';
 import { DEFAULT_PAGE_LIMIT } from '@/config/constants';
 import { useExport } from '@/composables/useExport';
+import { useTableSchema } from '@/composables/useTableSchema';
 import type { RowData } from '@/types';
 import NullValue from '@/components/shared/NullValue.vue';
 import AddRowModal from '@/components/data-browser/AddRowModal.vue';
@@ -127,6 +134,11 @@ const sortOrder = ref<'asc' | 'desc'>('asc');
 const showAddModal = ref(false);
 const showEditModal = ref(false);
 const editingRow = ref<RowData | null>(null);
+const showExpandModal = ref(false);
+const expandedCell = ref<{ col: string; value: string } | null>(null);
+
+const { schema } = useTableSchema(authStore.apiClient, () => tablesStore.selectedTable ?? '');
+const schemaTypeMap = computed(() => new Map(schema.value.map(c => [c.name, c.type.toUpperCase().split('(')[0]])));
 
 const pageCount = computed(() => Math.ceil(total.value / PAGE_LIMIT) || 1);
 
@@ -141,6 +153,19 @@ function colWidth(col: string): number {
   return Math.max(100, Math.min(col.length * 9 + 48, 280));
 }
 
+function copyCell(val: string, e: MouseEvent) {
+  e.stopPropagation();
+  navigator.clipboard?.writeText(val)
+    .then(() => notif.showToast({ message: 'Copied', type: 'success' }))
+    .catch(() => notif.showToast({ message: 'Copy failed', type: 'warning' }));
+}
+
+function expandCell(col: string, val: string, e: MouseEvent) {
+  e.stopPropagation();
+  expandedCell.value = { col, value: val };
+  showExpandModal.value = true;
+}
+
 const scrollX = computed(() => {
   if (data.value.length === 0) return 600;
   return Math.max(600, Object.keys(data.value[0]).reduce((sum, col) => sum + colWidth(col), 0) + 110);
@@ -150,8 +175,12 @@ const tableColumns = computed<DataTableColumns<RowData>>(() => {
   const currentSortBy = sortBy.value;
   const currentSortOrder = sortOrder.value;
   if (data.value.length === 0) return [];
+  const typeMap = schemaTypeMap.value;
   const cols: DataTableColumns<RowData> = Object.keys(data.value[0]).map(col => ({
-    title: () => h('span', { class: 'col-title' }, col),
+    title: () => h('div', { class: 'col-header' }, [
+      h('span', { class: 'col-title' }, col),
+      typeMap.get(col) ? h('span', { class: 'col-type' }, typeMap.get(col)) : null,
+    ]),
     key: col,
     width: colWidth(col),
     sorter: true,
@@ -163,10 +192,18 @@ const tableColumns = computed<DataTableColumns<RowData>>(() => {
       if (val === null || val === undefined) return h(NullValue);
       const str = String(val);
       if (str.length > 200) {
-        return h('span', { class: 'cell-text' }, str);
+        return h('span', {
+          class: 'cell-text cell-long',
+          title: 'Click to copy · Double-click to expand',
+          onClick: (e: MouseEvent) => copyCell(str, e),
+          onDblclick: (e: MouseEvent) => expandCell(col, str, e),
+        }, str);
       }
       return h(NTooltip, { trigger: 'hover', placement: 'top-start', keepAliveOnHover: false }, {
-        trigger: () => h('span', { class: 'cell-text' }, str),
+        trigger: () => h('span', {
+          class: 'cell-text',
+          onClick: (e: MouseEvent) => copyCell(str, e),
+        }, str),
         default: () => h('span', { style: 'white-space: pre-wrap; word-break: break-all' }, str),
       });
     },
@@ -340,11 +377,25 @@ onMounted(loadData);
   padding: 0 2px;
 }
 
+:deep(.col-header) {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
 :deep(.col-title) {
   font-family: 'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
   font-size: 12px;
   font-weight: 600;
   color: #555;
+}
+
+:deep(.col-type) {
+  font-family: 'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
+  font-size: 10px;
+  font-weight: 400;
+  color: #bbb;
+  letter-spacing: 0.2px;
 }
 
 :deep(.actions-cell) {
@@ -366,5 +417,20 @@ onMounted(loadData);
   text-overflow: ellipsis;
   white-space: nowrap;
   max-width: 100%;
+  cursor: pointer;
+}
+
+:deep(.cell-long) {
+  color: #999;
+  font-style: italic;
+}
+
+.expanded-cell-content {
+  margin: 0;
+  font-family: 'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
+  font-size: 13px;
+  white-space: pre-wrap;
+  word-break: break-all;
+  line-height: 1.6;
 }
 </style>

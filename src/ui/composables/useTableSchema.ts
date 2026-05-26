@@ -1,11 +1,11 @@
-import { ref, watch } from 'vue';
+import { ref, watch, toValue, type MaybeRefOrGetter } from 'vue';
 import type { ApiClient } from '@/lib/api';
 import type { ColumnInfo } from '@/types';
 
 const schemaCache = new Map<string, { data: ColumnInfo[]; timestamp: number }>();
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
-export function useTableSchema(client: ApiClient, tableName: string) {
+export function useTableSchema(client: ApiClient, tableName: MaybeRefOrGetter<string>) {
   const schema = ref<ColumnInfo[]>([]);
   const loading = ref(false);
   const error = ref('');
@@ -39,7 +39,7 @@ export function useTableSchema(client: ApiClient, tableName: string) {
     return loadSchema(name);
   }
 
-  watch(() => tableName, loadSchema, { immediate: true });
+  watch(() => toValue(tableName), loadSchema, { immediate: true });
 
   return { schema, loading, error, invalidate };
 }
