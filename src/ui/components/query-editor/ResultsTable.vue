@@ -34,7 +34,7 @@
 
 <script setup lang="ts">
 import { computed, h } from 'vue';
-import { NDataTable, NText, NAlert, type DataTableColumns } from 'naive-ui';
+import { NDataTable, NText, NAlert, NTooltip, type DataTableColumns } from 'naive-ui';
 import type { QueryResult, RowData } from '@/types';
 import NullValue from '@/components/shared/NullValue.vue';
 
@@ -47,15 +47,24 @@ const tableColumns = computed<DataTableColumns<RowData>>(() => {
     title: () => h('span', { class: 'col-title' }, col),
     key: col,
     width: 150,
-    ellipsis: { tooltip: { style: { maxWidth: '400px', wordBreak: 'break-all' } } },
     sorter: (a: RowData, b: RowData) => {
       const av = a[col], bv = b[col];
       if (av === null) return -1;
       if (bv === null) return 1;
       return typeof av === 'number' && typeof bv === 'number' ? av - bv : String(av).localeCompare(String(bv));
     },
-    render: (row: RowData) =>
-      row[col] === null || row[col] === undefined ? h(NullValue) : String(row[col]),
+    render: (row: RowData) => {
+      const val = row[col];
+      if (val === null || val === undefined) return h(NullValue);
+      const str = String(val);
+      if (str.length > 200) {
+        return h('span', { class: 'cell-text' }, str);
+      }
+      return h(NTooltip, { trigger: 'hover', placement: 'top-start', keepAliveOnHover: false }, {
+        trigger: () => h('span', { class: 'cell-text' }, str),
+        default: () => h('span', { style: 'white-space: pre-wrap; word-break: break-all' }, str),
+      });
+    },
   }));
 });
 
@@ -84,5 +93,13 @@ const scrollX = computed(() => {
 :deep(.results-table .n-data-table-td) {
   padding-top: 8px;
   padding-bottom: 8px;
+}
+
+:deep(.cell-text) {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
 }
 </style>

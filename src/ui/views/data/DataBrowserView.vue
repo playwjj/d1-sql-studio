@@ -138,14 +138,22 @@ const tableColumns = computed<DataTableColumns<RowData>>(() => {
     title: () => h('span', { class: 'col-title' }, col),
     key: col,
     width: 140,
-    ellipsis: { tooltip: { style: { maxWidth: '400px', wordBreak: 'break-all' } } },
     sorter: true,
     sortOrder: currentSortBy === col
       ? (currentSortOrder === 'asc' ? 'ascend' : 'descend')
       : false,
-    render: (row: RowData) => row[col] === null || row[col] === undefined
-      ? h(NullValue)
-      : String(row[col]),
+    render: (row: RowData) => {
+      const val = row[col];
+      if (val === null || val === undefined) return h(NullValue);
+      const str = String(val);
+      if (str.length > 200) {
+        return h('span', { class: 'cell-text' }, str);
+      }
+      return h(NTooltip, { trigger: 'hover', placement: 'top-start', keepAliveOnHover: false }, {
+        trigger: () => h('span', { class: 'cell-text' }, str),
+        default: () => h('span', { style: 'white-space: pre-wrap; word-break: break-all' }, str),
+      });
+    },
   }));
   cols.push({
     title: '',
@@ -323,5 +331,13 @@ onMounted(loadData);
 :deep(.data-table .n-data-table-td) {
   padding-top: 8px;
   padding-bottom: 8px;
+}
+
+:deep(.cell-text) {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
 }
 </style>
