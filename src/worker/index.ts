@@ -71,7 +71,17 @@ export default {
       }
     }
 
-    // Serve static assets (hash-mode SPA — browser always sends /, no server routing needed)
+    // Redirect bare root to dashboard
+    if (url.pathname === '/') {
+      return Response.redirect(`${url.origin}/dashboard`, 302);
+    }
+
+    // Serve SPA for /dashboard — rewrite to index.html
+    if (url.pathname === '/dashboard' || url.pathname === '/dashboard/') {
+      return env.ASSETS.fetch(new Request(`${url.origin}/`, request));
+    }
+
+    // Serve static assets (JS, CSS, fonts, favicon, etc.)
     return env.ASSETS.fetch(request);
   },
 };

@@ -2,7 +2,7 @@ import { createRouter, createWebHashHistory } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 
 const router = createRouter({
-  history: createWebHashHistory(),
+  history: createWebHashHistory('/dashboard'),
   routes: [
     { path: '/login', name: 'login', component: () => import('@/views/auth/LoginView.vue') },
     { path: '/setup', name: 'setup', component: () => import('@/views/auth/FirstTimeSetupView.vue') },
