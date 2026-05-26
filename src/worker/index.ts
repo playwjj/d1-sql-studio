@@ -76,7 +76,7 @@ export default {
       return Response.redirect(`${url.origin}/dashboard`, 302);
     }
 
-    // Serve SPA for /dashboard — rewrite to index.html
+    // Serve index.html for /dashboard entry point (hash router handles the rest client-side)
     if (url.pathname === '/dashboard' || url.pathname === '/dashboard/') {
       return env.ASSETS.fetch(new Request(`${url.origin}/`, request));
     }
