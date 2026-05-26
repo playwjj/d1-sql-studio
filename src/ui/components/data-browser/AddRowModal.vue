@@ -36,7 +36,7 @@ const show = defineModel<boolean>('show', { default: false });
 const emit = defineEmits<{ success: [] }>();
 
 const authStore = useAuthStore();
-const { schema, loading: schemaLoading } = useTableSchema(authStore.apiClient, props.tableName);
+const { schema, loading: schemaLoading } = useTableSchema(authStore.apiClient, () => props.tableName);
 
 const formRef = ref<FormInst | null>(null);
 const loading = ref(false);

@@ -334,6 +334,7 @@ watch(() => tablesStore.selectedTable, () => {
   page.value = 1;
   search.value = '';
   searchInput.value = '';
+  editingRow.value = null;
   loadData();
 });
 
