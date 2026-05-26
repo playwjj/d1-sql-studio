@@ -198,6 +198,7 @@ onMounted(() => {
   flex-direction: column;
   height: 100vh;
   overflow: hidden;
+  background: #ffffff;
 }
 
 .query-toolbar {
@@ -206,7 +207,10 @@ onMounted(() => {
   justify-content: space-between;
   padding: 10px 16px;
   border-bottom: 1px solid #dde1eb;
+  box-shadow: 0 2px 8px rgba(28, 31, 46, 0.05);
   flex-shrink: 0;
+  position: relative;
+  z-index: 1;
 }
 
 .editor-wrapper {

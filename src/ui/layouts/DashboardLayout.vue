@@ -116,12 +116,18 @@ onMounted(() => {
 </script>
 
 <style scoped>
+:deep(.n-layout-sider) {
+  box-shadow: 2px 0 10px rgba(28, 31, 46, 0.09);
+  z-index: 5;
+}
+
 .sidebar-header {
   display: flex;
   align-items: center;
   gap: 8px;
   padding: 16px 18px 12px;
   border-bottom: 1px solid #dde1eb;
+  background: rgba(0, 0, 0, 0.03);
 }
 
 .sidebar-title {
