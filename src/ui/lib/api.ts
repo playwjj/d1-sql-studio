@@ -187,4 +187,19 @@ export class ApiClient {
       method: 'DELETE',
     });
   }
+
+  async listApiKeys(): Promise<ApiResponse> {
+    return this.request('/keys');
+  }
+
+  async createApiKey(name: string, description?: string): Promise<ApiResponse> {
+    return this.request('/keys', {
+      method: 'POST',
+      body: JSON.stringify({ name, description }),
+    });
+  }
+
+  async deleteApiKey(id: string): Promise<ApiResponse> {
+    return this.request(`/keys/${id}`, { method: 'DELETE' });
+  }
 }

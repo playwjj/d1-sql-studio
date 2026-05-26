@@ -239,6 +239,16 @@ export interface ExportOptions {
 // ============================================================================
 
 /**
+ * API Key info returned from the server
+ */
+export interface ApiKeyInfo {
+  id: string;
+  name: string;
+  description?: string;
+  createdAt?: string;
+}
+
+/**
  * Generic cache entry
  */
 export interface CacheEntry<T> {

@@ -1,41 +1,43 @@
 # D1 SQL Studio
 
-A modern, lightweight database management tool for Cloudflare D1, built with **Preact + TypeScript + Vite**.
+A professional database management tool for Cloudflare D1, built with **Vue 3 + Naive UI + TypeScript + Vite**.
 
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 ![Cloudflare Workers](https://img.shields.io/badge/Cloudflare-Workers-F38020)
+![Vue 3](https://img.shields.io/badge/Vue-3-4FC08D?logo=vue.js&logoColor=white)
 ![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?logo=typescript&logoColor=white)
 
 ## ✨ Features
 
-- 🎨 **Modern Web Interface** - Built with Preact for optimal performance
-- 📊 **Table Management** - Create, view, and delete database tables with visual builder
-- 📝 **Data Browser** - Browse and manage table data with pagination
-- ⚡ **SQL Query Editor** - Execute custom SQL queries with Ctrl+Enter shortcut
+- 🎨 **Professional UI** - Built with Vue 3 + Naive UI for a tooling-grade experience
+- 📊 **Table Management** - Create, view, and delete tables with a visual builder and SQL editor
+- 📝 **Data Browser** - Browse and manage table data with pagination, sorting, and search
+- ⚡ **SQL Query Editor** - Execute custom SQL with CodeMirror 6, syntax highlighting, and autocompletion
+- 🗂️ **Query History** - Persistent query history with search and filter
 - 🔐 **Secure Authentication** - Multi-user API key management with KV storage
-- 🎯 **Visual Table Builder** - Create tables with an intuitive drag-and-drop interface
+- 🎯 **Visual Table Builder** - Build table schemas with a GUI — real-time SQL preview
 - 🔑 **API Key Management** - Generate, manage, and revoke API keys through the UI
-- ✅ **Form Validation** - Real-time validation with helpful error messages
-- 🛡️ **Security Hardened** - SQL injection protection and input validation
+- 🛡️ **Security Hardened** - SQL injection protection and identifier validation
 - 🌐 **Edge Computing** - Runs on Cloudflare Workers for global performance
-- 📦 **Lightweight** - Only ~10KB gzipped bundle size
 - 🔌 **REST API** - Complete REST API for programmatic access
 - 🔀 **Multi-Field Sorting** - Sort data by multiple columns simultaneously
 - 🔗 **Multi-Table Joins** - Structured JOIN queries with RESTful API
 
 ## 🏗️ Architecture
 
-This project uses a modern, component-based architecture:
-
 ### Backend (Cloudflare Worker)
 - **Runtime**: Cloudflare Workers
 - **Database**: Cloudflare D1 (SQLite-based)
 - **API Keys Storage**: Cloudflare KV
-- **Static Assets**: Workers Sites (KV-based)
+- **Static Assets**: Workers Assets
 - **Location**: `src/worker/`
 
-### Frontend (Preact SPA)
-- **Framework**: Preact (~3KB React alternative)
+### Frontend (Vue 3 SPA)
+- **Framework**: Vue 3 + Composition API
+- **UI Library**: Naive UI
+- **State Management**: Pinia
+- **Routing**: Vue Router
+- **Editor**: CodeMirror 6
 - **Language**: TypeScript
 - **Bundler**: Vite
 - **Location**: `src/ui/`
@@ -60,7 +62,6 @@ This project uses a modern, component-based architecture:
 ## 📦 Installation
 
 ```bash
-# Install dependencies
 npm install
 ```
 
@@ -80,7 +81,7 @@ npm run dev:worker
 ```
 Worker runs at `http://localhost:8787`
 
-The frontend proxies `/api/*` requests to the Worker.
+The frontend proxies `/api/*` requests to the Worker automatically.
 
 ### Database Setup
 
@@ -91,9 +92,7 @@ The frontend proxies `/api/*` requests to the Worker.
 npx wrangler d1 create d1-sql-studio-db
 ```
 
-2. Copy the `database_id` from the output
-
-3. Edit `wrangler.toml` and uncomment the `[[d1_databases]]` section:
+2. Copy the `database_id` from the output and update `wrangler.toml`:
 ```toml
 [[d1_databases]]
 binding = "DB"
@@ -101,35 +100,25 @@ database_name = "d1-sql-studio-db"
 database_id = "your-database-id-here"
 ```
 
-4. Restart the dev server
+3. Restart the dev server
 
 **Option 2: Cloudflare Dashboard (Production, Recommended)**
 
 1. Deploy your Worker
-2. Go to Cloudflare Dashboard
-3. Navigate to Workers & Pages > Your Worker
-4. Go to Settings > Bindings > D1 Database Bindings
-5. Add binding: Variable name = `DB`, select/create your database
-6. Save and wait a few seconds for the configuration to take effect
+2. Go to Cloudflare Dashboard → Workers & Pages → Your Worker → Settings → Bindings
+3. Add D1 binding: Variable name = `DB`, select/create your database
+4. Save and wait a few seconds
 
 ### API Keys Setup
 
-**Important:** API keys are now managed through the UI, not environment variables.
-
-The app uses Cloudflare KV to store API keys, allowing you to:
-- Create multiple API keys with descriptions
-- Manage and revoke keys through the dashboard
-- Track when keys were last used
-- No need to redeploy when rotating keys
+API keys are managed through the UI and stored in Cloudflare KV.
 
 **First-time setup:**
-1. Deploy the app (see deployment section below)
-2. Visit your app URL - you'll see a first-time setup screen
-3. Create your first API key through the UI
-4. Save the generated key securely
-5. Login with your new API key
-
-**Note:** For local development, a fallback default key is used if no KV is configured.
+1. Deploy the app (see below)
+2. Visit your app URL — you'll see the first-time setup screen
+3. Create your first API key
+4. **Save the generated key** — it's only shown once
+5. Log in with your new key
 
 ## 🏗️ Build
 
@@ -137,22 +126,16 @@ The app uses Cloudflare KV to store API keys, allowing you to:
 # Build frontend only
 npm run build:ui
 
-# Type-check worker only
+# Type-check worker
 npm run build:worker
 
 # Full build (frontend + type check)
 npm run build
 ```
 
-Build output:
-- Frontend: `dist/` directory
-- Bundle size: ~28KB (~10KB gzipped)
-
 ## 🚀 Deployment
 
 ### Prerequisites
-
-Before deploying, you need to create two Cloudflare resources:
 
 #### 1. Create D1 Database
 
@@ -160,13 +143,13 @@ Before deploying, you need to create two Cloudflare resources:
 npx wrangler d1 create d1-sql-studio
 ```
 
-Copy the `database_id` from the output and update `wrangler.toml`:
+Copy the `database_id` and update `wrangler.toml`:
 
 ```toml
 [[d1_databases]]
 binding = "DB"
 database_name = "d1-sql-studio"
-database_id = "your-database-id-here"  # Replace with your database ID
+database_id = "your-database-id-here"
 ```
 
 #### 2. Create KV Namespace for API Keys
@@ -175,123 +158,100 @@ database_id = "your-database-id-here"  # Replace with your database ID
 npx wrangler kv:namespace create "API_KEYS"
 ```
 
-Copy the `id` from the output and update `wrangler.toml`:
+Copy the `id` and update `wrangler.toml`:
 
 ```toml
 [[kv_namespaces]]
 binding = "API_KEYS"
-id = "your-kv-id-here"  # Replace with your KV namespace ID
+id = "your-kv-id-here"
 ```
 
-For preview environment (optional):
-```bash
-npx wrangler kv:namespace create "API_KEYS" --preview
-```
-
-### Deploy to Cloudflare Workers
+### Deploy
 
 ```bash
 npm run deploy
 ```
 
-This will:
-1. Build the frontend (Vite)
-2. Type-check the worker (TypeScript)
-3. Deploy to Cloudflare Workers
+This builds the frontend and deploys to Cloudflare Workers.
 
 ### First-Time Setup
 
-After deployment:
-
-1. Visit your Worker URL (e.g., `https://d1-sql-studio.your-subdomain.workers.dev`)
-2. You'll see a **First-Time Setup** screen
-3. Enter a name for your first API key (e.g., "Production Key")
-4. Click **Generate API Key**
-5. **Important:** Copy and save the generated key securely - you won't see it again!
-6. Click **Continue to Dashboard**
-7. You're now logged in and can start managing your database
-
-### Managing API Keys
-
-After initial setup, you can manage API keys from the Dashboard:
-
-- **Settings > API Keys** - View all your API keys
-- **Create New Key** - Generate additional API keys for different users/apps
-- **Delete** - Revoke API keys instantly (no redeployment needed)
-- **Track Usage** - See when each key was last used
-
-### Alternative: Cloudflare Dashboard Setup
-
-If you prefer using the Cloudflare Dashboard:
-
-1. Go to **Workers & Pages** > Select your worker
-2. **Settings** > **Bindings**
-3. Add **D1 Database Binding**:
-   - Variable name: `DB`
-   - Select your D1 database
-4. Add **KV Namespace Binding**:
-   - Variable name: `API_KEYS`
-   - Select your KV namespace
-5. Save and redeploy
+1. Visit your Worker URL
+2. See the **First-Time Setup** screen
+3. Enter a name for your first API key and click **Generate API Key**
+4. Copy and save the key securely — it won't be shown again
+5. Click **Continue to Dashboard**
 
 ## 📁 Project Structure
 
 ```
 d1-sql-studio/
 ├── src/
-│   ├── worker/              # Backend (Cloudflare Worker)
-│   │   ├── index.ts        # Worker entry point
-│   │   ├── router.ts       # API routing
-│   │   ├── db.ts           # D1 database operations
-│   │   ├── auth.ts         # Authentication
-│   │   ├── apikeys.ts      # API key management (KV)
-│   │   ├── security.ts     # Security validation
-│   │   └── types.ts        # TypeScript types
-│   └── ui/                  # Frontend (Preact SPA)
-│       ├── components/     # React components
-│       │   ├── shared/     # Shared components
-│       │   │   ├── Modal.tsx
-│       │   │   ├── Button.tsx
-│       │   │   ├── Alert.tsx
-│       │   │   ├── FormField.tsx
-│       │   │   ├── Toast.tsx
-│       │   │   └── ConfirmDialog.tsx
-│       │   ├── Tables/     # Tables view
-│       │   │   ├── TableList.tsx
-│       │   │   ├── CreateTableModal.tsx
-│       │   │   └── VisualTableBuilder.tsx
-│       │   ├── DataBrowser/ # Data browser
-│       │   │   ├── DataBrowser.tsx
-│       │   │   ├── AddRowModal.tsx
-│       │   │   └── EditRowModal.tsx
-│       │   ├── QueryEditor/ # SQL query editor
-│       │   ├── Login.tsx   # Login component
-│       │   ├── FirstTimeSetup.tsx # Initial setup
-│       │   ├── ApiKeyManagement.tsx # API key management
-│       │   └── Dashboard.tsx # Main dashboard
-│       ├── contexts/        # React contexts
-│       │   └── NotificationContext.tsx
-│       ├── hooks/           # Custom hooks
-│       │   └── useFormValidation.ts
-│       ├── lib/            # Utilities
-│       │   ├── api.ts      # API client
-│       │   └── utils.ts    # Helper functions
-│       ├── App.tsx         # Root component
-│       ├── main.tsx        # Entry point
-│       └── styles.css      # Global styles
-├── public/                  # Static assets
-├── dist/                    # Build output
-├── index.html              # HTML template
-├── vite.config.ts          # Vite configuration
-├── tsconfig.json           # TypeScript config (UI)
-├── tsconfig.worker.json    # TypeScript config (Worker)
-├── wrangler.toml           # Cloudflare Workers config
-└── package.json            # Dependencies & scripts
+│   ├── worker/                  # Backend (Cloudflare Worker)
+│   │   ├── index.ts            # Worker entry point
+│   │   ├── router.ts           # API routing
+│   │   ├── db.ts               # D1 database operations
+│   │   ├── auth.ts             # Authentication
+│   │   ├── apikeys.ts          # API key management (KV)
+│   │   ├── security.ts         # Security validation
+│   │   └── types.ts            # TypeScript types
+│   └── ui/                      # Frontend (Vue 3 SPA)
+│       ├── main.ts             # App entry point
+│       ├── App.vue             # Root component (Naive UI providers)
+│       ├── env.d.ts            # Vue module declarations
+│       ├── router/
+│       │   └── index.ts        # Vue Router + navigation guards
+│       ├── stores/
+│       │   ├── auth.ts         # Auth state (apiKey, login/logout)
+│       │   ├── tables.ts       # Table list + selected table
+│       │   └── notification.ts # showToast / showConfirm
+│       ├── composables/
+│       │   ├── useTableSchema.ts  # Schema loading with 5-min cache
+│       │   └── useExport.ts       # CSV / JSON / SQL export
+│       ├── layouts/
+│       │   └── DashboardLayout.vue  # Sidebar + main content layout
+│       ├── views/
+│       │   ├── auth/
+│       │   │   ├── LoginView.vue
+│       │   │   └── FirstTimeSetupView.vue
+│       │   ├── tables/TablesView.vue
+│       │   ├── data/DataBrowserView.vue
+│       │   ├── query/QueryEditorView.vue
+│       │   └── keys/ApiKeysView.vue
+│       ├── components/
+│       │   ├── tables/
+│       │   │   ├── CreateTableModal.vue
+│       │   │   ├── VisualTableBuilder.vue  # GUI builder + SQL preview
+│       │   │   └── EditTableModal.vue       # Columns / Rename / Indexes tabs
+│       │   ├── data-browser/
+│       │   │   ├── AddRowModal.vue
+│       │   │   ├── EditRowModal.vue
+│       │   │   └── ApiDocumentation.vue     # Collapsible REST API reference
+│       │   ├── query-editor/
+│       │   │   ├── SqlEditor.vue            # CodeMirror 6 wrapper
+│       │   │   ├── ResultsTable.vue
+│       │   │   ├── QueryHistory.vue
+│       │   │   └── KeyboardShortcuts.vue
+│       │   └── shared/
+│       │       └── NullValue.vue
+│       └── lib/                 # Pure TypeScript utilities (no framework deps)
+│           ├── api.ts          # ApiClient class
+│           ├── exportUtils.ts  # CSV / JSON / SQL export
+│           ├── queryHistory.ts # localStorage query history
+│           └── utils.ts
+├── public/                      # Static assets
+├── dist/                        # Build output
+├── index.html                  # HTML template
+├── vite.config.ts              # Vite configuration
+├── tsconfig.json               # TypeScript config (UI)
+├── tsconfig.worker.json        # TypeScript config (Worker)
+├── wrangler.toml               # Cloudflare Workers config
+└── package.json
 ```
 
 ## 🔧 API Usage
 
-All API endpoints require authentication via the `Authorization` header:
+All API endpoints require the `Authorization` header:
 
 ```bash
 Authorization: Bearer your-api-key
@@ -313,37 +273,18 @@ GET /api/tables/:tableName/rows?page=1&limit=50&sortBy=id&sortOrder=asc&search=k
 ```
 
 **Query Parameters:**
-- `page` (optional): Page number (default: 1)
-- `limit` (optional): Rows per page (default: 50, max: 1000)
-- `sortBy` (optional): Column name to sort by (single field)
-- `sortOrder` (optional): Sort direction - `asc` or `desc` (default: asc)
-- `sort` (optional): **Multi-field sort** - Format: `field1:order1,field2:order2`
-- `search` (optional): Search keyword (searches in all TEXT columns)
+- `page` — Page number (default: 1)
+- `limit` — Rows per page (default: 50, max: 1000)
+- `sortBy` — Column to sort by (single field)
+- `sortOrder` — `asc` or `desc` (default: asc)
+- `sort` — Multi-field sort, format: `field1:order1,field2:order2`
+- `search` — Keyword search across all TEXT columns
 
-**Examples:**
+**Multi-field sort examples:**
 ```bash
-# Basic pagination
-GET /api/tables/users/rows?page=1&limit=50
-
-# Single-field sort: Sort by ID descending
-GET /api/tables/users/rows?sortBy=id&sortOrder=desc
-
-# Single-field sort: Sort by name ascending
-GET /api/tables/users/rows?sortBy=name&sortOrder=asc
-
-# Multi-field sort: Sort by name ascending, then created_at descending
+# Sort by name ascending, then created_at descending
 GET /api/tables/users/rows?sort=name:asc,created_at:desc
-
-# Multi-field sort: Sort by status, priority, and date
-GET /api/tables/tasks/rows?sort=status:asc,priority:desc,due_date:asc
-
-# Search + multi-field sort
-GET /api/tables/users/rows?search=john&sort=last_name:asc,first_name:asc
 ```
-
-**Sort Parameter Priority:**
-- If `sort` is provided, it takes priority (multi-field sorting)
-- Otherwise, `sortBy` + `sortOrder` are used (single-field sorting, backward compatible)
 
 ### Execute SQL Query
 ```bash
@@ -356,49 +297,11 @@ Content-Type: application/json
 }
 ```
 
-**Supported SQL Statements:**
-- `SELECT` - Query data (supports JOINs, subqueries, etc.)
-- `INSERT` - Insert new records
-- `UPDATE` - Update existing records
-- `DELETE` - Delete records
-- `PRAGMA` - Database metadata queries
+**Allowed statements:** `SELECT`, `INSERT`, `UPDATE`, `DELETE`, `PRAGMA`
 
-**Security:**
-- ✅ Parameterized queries with `?` placeholders
-- ✅ Multiple statements blocked
-- ✅ SQL comments blocked
-- ❌ DDL operations (DROP, CREATE, ALTER) not allowed via this endpoint
+**Security:** parameterized queries, multiple statements blocked, DDL not allowed via this endpoint.
 
-**Examples:**
-```bash
-# Simple SELECT
-POST /api/query
-{"sql": "SELECT * FROM users LIMIT 10"}
-
-# JOIN query
-POST /api/query
-{
-  "sql": "SELECT u.name, o.total FROM users u INNER JOIN orders o ON u.id = o.user_id WHERE o.total > ?",
-  "params": [100]
-}
-
-# Aggregate with GROUP BY
-POST /api/query
-{
-  "sql": "SELECT category, COUNT(*) as count, AVG(price) as avg_price FROM products GROUP BY category"
-}
-
-# Subquery
-POST /api/query
-{
-  "sql": "SELECT * FROM users WHERE id IN (SELECT user_id FROM orders WHERE total > ?)",
-  "params": [500]
-}
-```
-
-### Multi-Table Join Query (NEW)
-
-Structured, RESTful approach for multi-table JOINs:
+### Multi-Table Join Query
 
 ```bash
 POST /api/join
@@ -407,11 +310,7 @@ Content-Type: application/json
 {
   "baseTable": "users",
   "joins": [
-    {
-      "table": "orders",
-      "type": "LEFT",
-      "on": "users.id = orders.user_id"
-    }
+    { "table": "orders", "type": "LEFT", "on": "users.id = orders.user_id" }
   ],
   "select": ["users.*", "COUNT(orders.id) as order_count"],
   "where": "users.created_at > ?",
@@ -422,316 +321,124 @@ Content-Type: application/json
 }
 ```
 
-**Request Parameters:**
-
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
 | `baseTable` | string | ✅ | Base table name |
-| `joins` | JoinConfig[] | ✅ | Array of JOIN configurations (1-10 joins) |
-| `select` | string[] | ❌ | Columns to select (default: `["*"]`, max: 50) |
+| `joins` | JoinConfig[] | ✅ | JOIN configurations (1–10 joins) |
+| `select` | string[] | ❌ | Columns to select (default: `["*"]`) |
 | `where` | string | ❌ | WHERE clause with `?` placeholders |
-| `groupBy` | string[] | ❌ | GROUP BY columns (max: 20) |
+| `groupBy` | string[] | ❌ | GROUP BY columns |
 | `having` | string | ❌ | HAVING clause |
-| `orderBy` | string | ❌ | ORDER BY clause (e.g., `"created_at DESC"`) |
-| `limit` | number | ❌ | Max records to return (max: 1000) |
-| `offset` | number | ❌ | Offset for pagination |
-| `params` | any[] | ❌ | Parameter values for WHERE/HAVING |
+| `orderBy` | string | ❌ | ORDER BY clause |
+| `limit` | number | ❌ | Max records (max: 1000) |
+| `offset` | number | ❌ | Pagination offset |
+| `params` | any[] | ❌ | Values for WHERE/HAVING |
 
-**JoinConfig Object:**
+### Table CRUD
 
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `table` | string | ✅ | Table name to join |
-| `type` | 'INNER' \| 'LEFT' \| 'RIGHT' \| 'CROSS' | ✅ | Join type |
-| `on` | string | ❌ | Join condition (required except for CROSS JOIN) |
-
-**Examples:**
-
-**1. Basic INNER JOIN:**
-```json
-{
-  "baseTable": "users",
-  "joins": [
-    {"table": "orders", "type": "INNER", "on": "users.id = orders.user_id"}
-  ],
-  "select": ["users.name", "orders.total", "orders.order_date"],
-  "where": "orders.total > ?",
-  "orderBy": "orders.order_date DESC",
-  "limit": 50,
-  "params": [100]
-}
-```
-
-**2. Multiple LEFT JOINs with Aggregation:**
-```json
-{
-  "baseTable": "users",
-  "joins": [
-    {"table": "orders", "type": "LEFT", "on": "users.id = orders.user_id"},
-    {"table": "addresses", "type": "LEFT", "on": "users.id = addresses.user_id"}
-  ],
-  "select": [
-    "users.id",
-    "users.name",
-    "COUNT(orders.id) as order_count",
-    "SUM(orders.total) as total_spent",
-    "addresses.city"
-  ],
-  "groupBy": ["users.id", "users.name", "addresses.city"],
-  "having": "COUNT(orders.id) > ?",
-  "orderBy": "total_spent DESC",
-  "limit": 20,
-  "params": [5]
-}
-```
-
-**3. Product Catalog with Categories:**
-```json
-{
-  "baseTable": "products",
-  "joins": [
-    {"table": "categories", "type": "INNER", "on": "products.category_id = categories.id"}
-  ],
-  "select": [
-    "products.*",
-    "categories.name as category_name"
-  ],
-  "where": "products.stock > ? AND products.active = ?",
-  "orderBy": "products.created_at DESC",
-  "params": [0, true]
-}
-```
-
-**Security Features:**
-- ✅ All table and column names validated
-- ✅ Automatic SQL identifier quoting
-- ✅ Dangerous characters blocked (`;`, `--`, `/*`, `*/`)
-- ✅ Parameterized WHERE/HAVING clauses
-- ✅ Limits on joins (max 10), columns (max 50), and results (max 1000)
-
-**When to Use:**
-- Use `/api/join` for **structured, common JOIN patterns**
-- Use `/api/query` for **complex queries** (subqueries, CTEs, window functions, etc.)
-
-### Create Table
 ```bash
-POST /api/tables
-Content-Type: application/json
-
-{
-  "sql": "CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT)"
-}
+POST   /api/tables                      # Create table (body: { sql })
+DELETE /api/tables/:tableName           # Drop table
+POST   /api/tables/:tableName/rows      # Insert row
+PUT    /api/tables/:tableName/rows/:id  # Update row
+DELETE /api/tables/:tableName/rows/:id  # Delete row
 ```
 
-### Delete Table
+### Column Management
+
 ```bash
-DELETE /api/tables/:tableName
+POST   /api/tables/:tableName/columns/:columnName   # Add column
+PUT    /api/tables/:tableName/columns/:columnName   # Rename column
+DELETE /api/tables/:tableName/columns/:columnName   # Drop column
+PUT    /api/tables/:tableName/rename                # Rename table
 ```
 
-### Insert Row
+### Index Management
+
 ```bash
-POST /api/tables/:tableName/rows
-Content-Type: application/json
-
-{
-  "name": "John Doe",
-  "email": "john@example.com"
-}
-```
-
-### Update Row
-```bash
-PUT /api/tables/:tableName/rows/:id
-Content-Type: application/json
-
-{
-  "name": "Jane Doe"
-}
-```
-
-### Delete Row
-```bash
-DELETE /api/tables/:tableName/rows/:id
+GET    /api/tables/:tableName/indexes                     # List indexes
+GET    /api/tables/:tableName/indexes/:indexName/columns  # Index columns
+POST   /api/tables/:tableName/indexes                     # Create index
+DELETE /api/tables/:tableName/indexes/:indexName          # Drop index
 ```
 
 ### API Key Management
 
-#### List API Keys
 ```bash
-GET /api/keys
-```
-
-Response:
-```json
-{
-  "success": true,
-  "data": [
-    {
-      "name": "Production Key",
-      "description": "Main production API key",
-      "createdAt": "2024-01-15T10:30:00Z",
-      "lastUsedAt": "2024-01-20T15:45:00Z"
-    }
-  ]
-}
-```
-
-#### Create API Key
-```bash
-POST /api/keys
-Content-Type: application/json
-
-{
-  "name": "New Key",
-  "description": "Optional description"
-}
-```
-
-Response:
-```json
-{
-  "success": true,
-  "data": {
-    "name": "New Key",
-    "key": "generated-api-key-here",
-    "createdAt": "2024-01-20T16:00:00Z"
-  }
-}
-```
-
-#### Delete API Key
-```bash
-DELETE /api/keys/:keyName
+GET    /api/keys          # List keys
+POST   /api/keys          # Create key (body: { name, description? })
+DELETE /api/keys/:id      # Delete key
+GET    /api/keys/status   # Check if any keys exist (unauthenticated)
 ```
 
 ## 📝 Scripts Reference
 
 | Command | Description |
 |---------|-------------|
-| `npm run dev` | Start frontend dev server |
-| `npm run dev:worker` | Start Worker dev server |
+| `npm run dev` | Start frontend dev server (port 5173) |
+| `npm run dev:worker` | Start Worker dev server (port 8787) |
 | `npm run build` | Full build (UI + type check) |
 | `npm run build:ui` | Build frontend only |
 | `npm run build:worker` | Type-check Worker |
 | `npm run preview` | Preview production build |
-| `npm run deploy` | Deploy to Cloudflare |
+| `npm run deploy` | Build UI + deploy to Cloudflare |
 
 ## 🎯 Tech Stack
 
 **Frontend:**
-- ⚛️ Preact 10 - Lightweight React alternative (~3KB)
-- 📘 TypeScript 5 - Type safety
-- ⚡ Vite 5 - Fast bundler with HMR
-- 🎨 CSS Variables - Themeable design system
+- 🟢 Vue 3 — Composition API
+- 🎨 Naive UI — Professional component library
+- 🍍 Pinia — State management
+- 🔀 Vue Router — Client-side routing
+- 📝 CodeMirror 6 — SQL editor with syntax highlighting
+- 📘 TypeScript 5
+- ⚡ Vite 5
 
 **Backend:**
-- ☁️ Cloudflare Workers - Edge computing
-- 🗄️ Cloudflare D1 - SQLite database
-- 📦 Workers Sites - Static asset serving
+- ☁️ Cloudflare Workers — Edge computing
+- 🗄️ Cloudflare D1 — SQLite database
+- 📦 Workers Assets — Static asset serving
 
 **Tools:**
-- 🔨 Wrangler - Cloudflare CLI
-- 📦 npm - Package manager
+- 🔨 Wrangler — Cloudflare CLI
+- 📦 npm
 
 ## 🔒 Security Features
 
-### Authentication & Authorization
-- **API Key Management**: Multi-user support with individual API keys
-- **Secure Storage**: API keys stored in Cloudflare KV with bcrypt hashing
-- **Session Persistence**: Auto-login with locally stored keys
-- **Key Rotation**: Revoke and regenerate keys without redeployment
-
-### Input Validation & Security
-- **SQL Injection Protection**: All table/column names validated with strict regex patterns
-- **Query Whitelisting**: Only SELECT, INSERT, UPDATE, DELETE, and PRAGMA statements allowed
-- **Identifier Quoting**: All SQL identifiers properly quoted to prevent injection
-- **Input Sanitization**: Comprehensive validation on all user inputs
-- **Type Checking**: Strong type validation for all data operations
-
-### CORS Policy
-- **Same-Origin Only**: CORS restricted to same-origin requests by default
-- The frontend and API must be served from the same domain
-- Modify `src/worker/auth.ts` if you need custom CORS rules
-
-### Best Practices
-1. **API Keys**:
-   - Generate strong, unique keys for each user/application
-   - Add descriptions to track key usage
-   - Regularly review and revoke unused keys
-   - Never share API keys publicly or commit them to version control
-
-2. **Database Security**:
-   - Query editor blocks dangerous operations (DROP, CREATE, ALTER, TRUNCATE)
-   - Use the Visual Table Builder for schema changes
-   - All identifiers are validated against SQL keywords
-
-3. **KV Namespace**:
-   - Keep your KV namespace ID private
-   - Use separate namespaces for development and production
+- **API Key Management** — Multi-user support, bcrypt-hashed storage in KV
+- **SQL Injection Protection** — Identifier validation with strict regex
+- **Query Whitelisting** — Only SELECT/INSERT/UPDATE/DELETE/PRAGMA via `/api/query`
+- **Identifier Quoting** — All SQL identifiers automatically quoted
+- **Same-Origin CORS** — API restricted to same-origin requests by default
+- **Session Persistence** — Auto-login from localStorage, cleared on logout
 
 ## 🐛 Troubleshooting
 
 ### "DATABASE_NOT_BOUND" Error
 
-The app will show a setup guide if no database is bound. Follow these steps:
-
-1. Create a D1 database: `npx wrangler d1 create d1-sql-studio`
-2. Copy the database ID and update `wrangler.toml`
+1. Create D1 database: `npx wrangler d1 create d1-sql-studio`
+2. Update `database_id` in `wrangler.toml`
 3. Redeploy: `npm run deploy`
-4. Or bind via Cloudflare Dashboard: Settings > Bindings > D1 Database Bindings
-5. Refresh the page
 
-### "First-Time Setup" Screen Not Appearing
-
-If you deployed without a KV namespace, the app will use a fallback authentication mode:
+### First-Time Setup Screen Not Appearing
 
 1. Create KV namespace: `npx wrangler kv:namespace create "API_KEYS"`
-2. Update `wrangler.toml` with the namespace ID
-3. Redeploy: `npm run deploy`
-4. Clear your browser cache and revisit the app
-
-### Can't Login After Creating API Key
-
-If you created an API key but can't login:
-
-1. Make sure you copied the full API key (it's only shown once)
-2. Check browser console for errors
-3. Verify KV namespace is properly bound in Cloudflare Dashboard
-4. Try creating a new API key from the First-Time Setup screen
-
-### API Keys Not Persisting
-
-If your API keys disappear after deployment:
-
-1. Verify KV namespace binding in `wrangler.toml`
-2. Check that the binding name is exactly `API_KEYS`
-3. Ensure you're not using `--preview` mode in production
-4. Check Cloudflare Dashboard > KV to verify data is stored
+2. Update `wrangler.toml` with namespace ID
+3. Redeploy and clear browser cache
 
 ### Build Errors
 
-If you encounter build errors:
-
 ```bash
-# Clean install
 rm -rf node_modules package-lock.json
 npm install
-
-# Rebuild
 npm run build
 ```
 
 ### TypeScript Errors
 
-Make sure you're using the correct TypeScript configuration:
-
-- Frontend: `tsconfig.json`
-- Worker: `tsconfig.worker.json`
-
-Run type checking separately:
 ```bash
-tsc --noEmit  # Frontend
-tsc --project tsconfig.worker.json  # Worker
+tsc --noEmit                           # Frontend
+tsc --project tsconfig.worker.json    # Worker
 ```
 
 ## 🤝 Contributing
@@ -740,13 +447,14 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## 📄 License
 
-MIT License - see the [LICENSE](LICENSE) file for details.
+MIT License — see [LICENSE](LICENSE) for details.
 
 ## 🙏 Acknowledgments
 
 - Built for [Cloudflare Workers](https://workers.cloudflare.com/)
 - Powered by [Cloudflare D1](https://developers.cloudflare.com/d1/)
-- UI with [Preact](https://preactjs.com/)
+- UI with [Vue 3](https://vuejs.org/) + [Naive UI](https://www.naiveui.com/)
+- Editor by [CodeMirror](https://codemirror.net/)
 - Bundled by [Vite](https://vitejs.dev/)
 
 ---

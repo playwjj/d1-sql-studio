@@ -1,6 +1,6 @@
 {
   "name": "d1-sql-studio",
-  "version": "2.1.0",
+  "version": "3.0.0",
   "description": "Cloudflare D1 Database Management Studio with REST API",
   "type": "module",
   "scripts": {
@@ -29,14 +29,17 @@
     "@codemirror/search": "^6.5.11",
     "@codemirror/state": "^6.5.2",
     "@codemirror/view": "^6.38.8",
-    "lucide-preact": "^0.562.0",
-    "preact": "^10.19.3",
-    "sql-formatter": "^15.6.10"
+    "@lucide/vue": "^1.16.0",
+    "naive-ui": "^2.44.1",
+    "pinia": "^3.0.4",
+    "sql-formatter": "^15.6.10",
+    "vue": "^3.5.34",
+    "vue-router": "^5.0.7"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20231218.0",
-    "@preact/preset-vite": "^2.8.1",
     "@types/node": "^20.11.0",
+    "@vitejs/plugin-vue": "^6.0.7",
     "typescript": "^5.3.3",
     "vite": "^5.0.11",
     "wrangler": "^3.22.0"
