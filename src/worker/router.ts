@@ -184,8 +184,12 @@ export class Router {
     // Still blocks dangerous schema changes (CREATE TABLE, DROP TABLE, ALTER, TRUNCATE)
     validateSQLStatement(body.sql);
 
-    const result = await this.dbManager.executeQuery(body.sql, body.params);
-    return this.jsonResponse({ success: true, data: result });
+    const d1Result = await this.dbManager.executeQuery(body.sql, body.params);
+    return this.jsonResponse({
+      success: true,
+      data: d1Result.results,
+      meta: { changes: d1Result.meta?.changes, last_row_id: d1Result.meta?.last_row_id },
+    });
   }
 
   private async executeJoinQuery(request: Request): Promise<Response> {
