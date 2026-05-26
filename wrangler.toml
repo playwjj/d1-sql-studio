@@ -9,6 +9,7 @@ head_sampling_rate = 1
 # Serve static assets using Workers Assets (no KV usage)
 [assets]
 directory = "./dist"
+binding = "ASSETS"
 not_found_handling = "single-page-application"
 
 # D1 Database binding
