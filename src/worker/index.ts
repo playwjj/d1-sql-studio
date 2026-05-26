@@ -13,14 +13,12 @@ app.options('*', (c) => new Response(null, { headers: corsHeaders(c.req.raw) }))
 app.get('/', (c) => c.redirect('/dashboard', 302));
 
 // Serve SPA index.html for /dashboard and all sub-paths (Vue history mode)
-app.get('/dashboard', async (c) => {
+const serveSPA = async (c: any) => {
   const { origin } = new URL(c.req.url);
-  return c.env.ASSETS.fetch(new Request(`${origin}/`));
-});
-app.get('/dashboard/*', async (c) => {
-  const { origin } = new URL(c.req.url);
-  return c.env.ASSETS.fetch(new Request(`${origin}/`));
-});
+  return c.env.ASSETS.fetch(new Request(`${origin}/`, c.req.raw));
+};
+app.get('/dashboard', serveSPA);
+app.get('/dashboard/*', serveSPA);
 
 // Auth middleware for API routes
 app.use('/api/*', async (c, next) => {
