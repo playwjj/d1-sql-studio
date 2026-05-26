@@ -22,7 +22,7 @@ const themeOverrides: GlobalThemeOverrides = {
     borderColor: 'rgba(180, 184, 200, 0.7)',
   },
   Layout: {
-    color: '#f0f2f5',
+    color: '#ffffff',
     siderColor: '#e9ebf2',
   },
   DataTable: {

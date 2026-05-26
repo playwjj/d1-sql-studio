@@ -345,12 +345,7 @@ onMounted(loadData);
 
 <style scoped>
 .view-container {
-  margin: 16px;
-  padding: 20px 24px;
-  background: #ffffff;
-  border-radius: 10px;
-  box-shadow: 0 1px 4px rgba(28, 31, 46, 0.06), 0 4px 16px rgba(28, 31, 46, 0.04);
-  min-height: calc(100vh - 32px);
+  padding: 24px;
 }
 
 .view-header {
@@ -359,7 +354,7 @@ onMounted(loadData);
   justify-content: space-between;
   padding-bottom: 16px;
   margin-bottom: 16px;
-  border-bottom: 1px solid #eef0f6;
+  border-bottom: 1px solid #e8eaf2;
   flex-wrap: wrap;
   gap: 8px;
 }
