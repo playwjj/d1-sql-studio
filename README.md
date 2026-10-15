@@ -7,6 +7,17 @@ A management UI and REST API gateway for Cloudflare D1 — bringing your edge da
 ![Vue 3](https://img.shields.io/badge/Vue-3-4FC08D?logo=vue.js&logoColor=white)
 ![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?logo=typescript&logoColor=white)
 
+## 📸 Screenshots
+
+### Tables
+![Tables](docs/screenshots/tables.jpg)
+
+### SQL Query Editor
+![SQL Query](docs/screenshots/sql-query.jpg)
+
+### Data Browser
+![Data Browser](docs/screenshots/data-browser.jpg)
+
 ## 💡 Motivation
 
 Cloudflare D1 is built to live inside the Cloudflare ecosystem. Data flows in and out through Worker bindings and platform-native APIs — which works perfectly for edge applications, but leaves a gap: accessing D1 from the outside world requires writing custom Worker code for every use case.
